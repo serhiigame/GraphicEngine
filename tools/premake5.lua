@@ -26,7 +26,7 @@ project "LLR"
 		optimize "On"
 		
 	configuration "windows"
-		postbuildcommands { " copy /Y \"$(TargetDir)$(TargetFileName)\" \"$(SolutionDir)bin/%{cfg.buildcfg}/$(TargetFileName) \""}
+		postbuildcommands { " copy /Y \"$(TargetDir)$(TargetFileName)\" \"$(SolutionDir)bin\\%{cfg.buildcfg}\\$(TargetFileName) \""}
 		
 project "GU"
 	kind "SharedLib"
