@@ -1,0 +1,27 @@
+#version 440 core
+layout(location = 0) in vec3 vertexPos;
+layout(location = 1) in vec3 vertexNorm;
+//layout(location = 1) in vec2 uv;
+
+//out vec2 v_uv;
+
+layout (std140, binding = 0) uniform Model {
+	mat4 transform;
+} u_Model;
+
+
+layout (std140, binding = 8) uniform Camara {
+	mat4 view;
+	mat4 projection;
+} u_Camara;
+
+out vec3 v_pos;
+out vec3 v_norm;
+void main(){
+	//v_uv = uv;
+	vec4 pos = u_Camara.projection * u_Camara.view * u_Model.transform * vec4(vertexPos, 1.f);
+	
+	v_pos = pos.xyz ;
+	v_norm = (transpose(inverse(u_Camara.view * u_Model.transform)) * vec4( vertexNorm, 1.f)).xyz;
+	gl_Position = pos;
+}

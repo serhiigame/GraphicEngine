@@ -1,0 +1,18 @@
+#version 440 core
+
+layout (std140, binding = 1) uniform brightness {
+	float value;
+} u_brightness;
+
+layout (std140, binding = 0) uniform addColor {
+	vec3 color;
+} u_color;
+
+layout(binding = 7) uniform sampler2D tex;
+
+in vec3 v_color;
+in vec2 v_uv;
+
+out vec3 color;
+
+void main() { color = texture(tex, v_uv).xyz + 0.000001 * u_brightness.value + 0.00001 * u_color.color; }
