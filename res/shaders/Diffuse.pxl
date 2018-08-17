@@ -26,8 +26,8 @@ void main() {
 	pointLightPos = vec3(0.,0, -5.);
 	vec3 L = pointLightPos - position;
 
-	color = texture(norm, v_uv) ;
-	//color = vec4(1., 0., 0., 1.) * dot( normalize(-texture(norm, v_uv).xyz), normalize(-L));
+	//color = texture(norm, v_uv) ;
+	color = texture(difColor, v_uv) * dot( normalize(-texture(norm, v_uv).xyz), normalize(-L));
 
 	//vec3 L = pointLightPos - position;
 	//color = texture(norm, v_uv);
