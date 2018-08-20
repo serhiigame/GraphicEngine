@@ -14,6 +14,7 @@ namespace engine
 			FramebufferGL * fb = new FramebufferGL();
 
 			glGenFramebuffers(1, &fb->m_framebufferId);
+			glBindFramebuffer(GL_FRAMEBUFFER, fb->m_framebufferId);
 
 			GLuint depthrenderbuffer;
 			glGenRenderbuffers(1, &depthrenderbuffer);

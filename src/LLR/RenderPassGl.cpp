@@ -24,6 +24,9 @@ namespace engine
 
 			glUseProgram(shaderGl->GetProgramId());
 
+			// TODO: move to shader options
+			glEnable(GL_DEPTH_TEST);
+
 		//	glBindVertexArray(shaderGl->GetVaoId());
 
 			for (const GLuint & id : shaderGl->GetVertexAttributeIds())

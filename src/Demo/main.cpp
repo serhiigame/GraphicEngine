@@ -226,7 +226,7 @@ private:
 	{
 		constexpr const float ScrollSpeed = 0.1f;
 
-		g_demoBase->m_cameraDistance += value * ScrollSpeed;
+		g_demoBase->m_cameraDistance -= value * ScrollSpeed;
 		g_demoBase->m_isCamereDirty = true;
 	}
 
