@@ -24,6 +24,8 @@ namespace engine
 
 			buffer->Init(size, EBufferType::INDEX);
 
+			glGenBuffers(1, &buffer->m_bufferId);
+
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->m_bufferId);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, 0, GL_STATIC_DRAW);
 

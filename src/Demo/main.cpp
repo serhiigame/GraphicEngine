@@ -7,6 +7,8 @@
 #include "Math.h"
 #include "DemoUtil.h"
 
+#include "../GU/SceneIO.h"
+
 #include <set>
 
 
@@ -98,6 +100,7 @@ private:
 		double dy = y - self.m_mousePosCurrentY;
 
 		self.m_mousePosCurrentX = x;
+		self.m_mousePosCurrentY = y;
 
 		if (self.m_MouseMiddleButtonStatus == GLFW_PRESS)
 		{
@@ -193,7 +196,6 @@ protected:
 		m_scene = gApi.CreateScene();
 		m_camera = gApi.CreateCamera();
 		
-		m_cameraDistance = 1.f;
 		engine::Mat4f cameraProj = engine::MakeProjectionMatrix(1.f, 100, 90, 640. / 480);
 
 		gApi.SetCameraProjection(m_camera, cameraProj);
@@ -211,6 +213,12 @@ protected:
 	engine::graphic::GApi gApi;
 
 	engine::graphic::Scene * m_scene;
+
+	void SetCameraDistance(const float & distance)
+	{
+		m_cameraDistance = distance;
+		g_demoBase->m_isCamereDirty = true;
+	}
 
 private:
 
@@ -270,7 +278,7 @@ private:
 
 	bool m_isCamereDirty = true;
 
-	float m_cameraDistance = 0.0;
+	float m_cameraDistance = 0.0f;
 	float m_cameraYaw = 0.0f;
 	float m_cameraPitch = 0.0f;
 
@@ -285,7 +293,7 @@ protected:
 		DemoBase::SetScene();
 
 		
-
+		SetCameraDistance(0.9f);
 		
 
 		/*engine::Vec4f cameraTranslate({ 0.f, 0.0f, -0.9f, 1.f });
@@ -300,8 +308,16 @@ protected:
 
 
 
-		engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
+		//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
 		//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreatePlane(0.4f, 0.4f);
+
+		std::vector<engine::graphic::RawMeshData> rawMeshDatas;
+		if (!engine::utility::SceneIo::Get().LoadMesh("D:/Projects/1/FireRender/Resources/Obj/cube.obj", rawMeshDatas))
+		{
+			return;
+		}
+
+		engine::graphic::RawMeshData rawMeshData = rawMeshDatas[0];
 
 		mesh = gApi.CreateMesh(rawMeshData);
 

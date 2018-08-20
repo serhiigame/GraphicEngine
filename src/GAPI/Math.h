@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include <Mathematics/GteVector2.h>
 #include <Mathematics/GteVector3.h>
 #include <Mathematics/GteQuaternion.h>
 #include <Mathematics/GteMatrix4x4.h>
@@ -12,6 +13,7 @@
 
 namespace engine
 {
+	typedef gte::Vector2<float> Vec2f;
 	typedef gte::Vector3<float> Vec3f;
 	typedef gte::Vector4<float> Vec4f;
 	typedef gte::Matrix4x4<float> Mat4f;

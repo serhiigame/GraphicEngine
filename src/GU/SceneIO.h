@@ -9,8 +9,6 @@ namespace engine
 {
 	namespace utility
 	{
-		//class ImageIOBase;
-
 		class SceneIo final
 		{
 		public:
@@ -18,7 +16,7 @@ namespace engine
 			static SceneIo & Get();
 			
 			__declspec(dllexport)
-			const float * LoadScene(const std::string & filePath);
+				bool LoadMesh(const std::string & filename, std::vector<graphic::RawMeshData> & out_meshDatas);
 
 
 		private:

@@ -4,12 +4,12 @@
 #include <math.h>
 
 
-static void computeSphereVertex(float radius, float theta, float phi, engine::graphic::Vec3f & out_position, engine::graphic::Vec3f & out_normal)
+static void computeSphereVertex(float radius, float theta, float phi, engine::Vec3f & out_position, engine::Vec3f & out_normal)
 {
-	out_position = engine::graphic::Vec3f({ radius * sin(theta) * cos(phi) , radius * sin(theta) * sin(phi) , radius * cos(theta) });
+	out_position = engine::Vec3f({ radius * sin(theta) * cos(phi) , radius * sin(theta) * sin(phi) , radius * cos(theta) });
 
 	float len = sqrtf(out_position[0] * out_position[0] + out_position[1] * out_position[1] + out_position[2] * out_position[2]);
-	out_normal = engine::graphic::Vec3f({ out_position[0] / len, out_position[1] / len, out_position[2] / len });
+	out_normal = engine::Vec3f({ out_position[0] / len, out_position[1] / len, out_position[2] / len });
 }
 
 
@@ -70,8 +70,8 @@ engine::graphic::RawMeshData DemoUtils::CreateSphere(const float radius)
 	{
 		for (int j = 0; j < phiRange.size() - 1; ++j)
 		{
-			engine::graphic::Vec3f position;
-			engine::graphic::Vec3f normal;
+			engine::Vec3f position;
+			engine::Vec3f normal;
 
 
 			computeSphereVertex(radius, thetaRange[i], phiRange[j], position, normal);

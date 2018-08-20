@@ -1,16 +1,18 @@
 #pragma once
 
-#include <Mathematics/GteVector3.h>
+#include "Math.h"
+
 #include <vector>
 
 namespace engine
 {
 	namespace graphic
 	{
-		typedef gte::Vector3<float> Vec3f;
 		struct RawMeshData 
 		{
+			std::string Name;
 			std::vector<Vec3f> Positions;
+			std::vector<Vec2f> Uv;
 			std::vector<Vec3f> Normals;
 			std::vector<unsigned int> Indexes;
 		};
