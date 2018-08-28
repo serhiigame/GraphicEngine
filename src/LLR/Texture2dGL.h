@@ -1,5 +1,5 @@
 #pragma once
-#include "ITexture.h"
+#include "ITexture2D.h"
 
 
 
@@ -7,10 +7,10 @@ namespace engine
 {
 	namespace graphic
 	{
-		class TextureGL : public ITexture
+		class Texture2dGL : public ITexture2D
 		{
 		public:
-			static ITexture * CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType, const ETextureType type);
+			static ITexture2D * CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType);
 
 			virtual void Write(const size_t xMin, const size_t xMax, size_t yMin, size_t yMax, const void * o_data) override;
 

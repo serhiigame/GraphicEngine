@@ -1,10 +1,10 @@
-#include "Texture.h"
+#include "Texture2d.h"
 
 namespace engine
 {
 	namespace graphic
 	{
-		Texture::~Texture()
+		Texture2d::~Texture2d()
 		{
 			if (m_texture)
 			{

@@ -2,7 +2,8 @@
 #include "ShaderOpenGL.h"
 #include "BufferGL.h"
 #include "ConstantGL.h"
-#include "TextureGL.h"
+#include "Texture2dGL.h"
+#include "TextureCubeMapGL.h"
 #include "FramebufferGL.h"
 #include "RenderPassGl.h"
 
@@ -145,9 +146,14 @@ namespace engine
 			return ConstantGL::CreateConstantGl(size);
 		}
 
-		ITexture * LlrOpenGL::CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType, const ETextureType type)
+		ITexture2D * LlrOpenGL::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
 		{
-			return TextureGL::CreateTexture(width, heigth, format, dataType, type);
+			return Texture2dGL::CreateTexture(width, heigth, format, dataType);
+		}
+
+		ITextureCubeMap * LlrOpenGL::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		{
+			return TextureCubeMapGL::CreateTexture(width, heigth, format, dataType);
 		}
 
 		IFramebuffer * LlrOpenGL::CreateFramebuffer(const size_t width, const size_t heigth)

@@ -9,7 +9,7 @@ namespace engine
 			return m_properties;
 		}
 
-		void Material::SetProperty(const std::string & name, const Texture & texture)
+		void Material::SetProperty(const std::string & name, const Texture2d & texture)
 		{
 			auto finded = m_properties.find(name);
 #ifdef DEBUG
@@ -26,7 +26,7 @@ namespace engine
 
 			finded->second.Texture = texture;
 		}
-		void Material::GetProperty(const std::string & name, Texture & out_texture) const
+		void Material::GetProperty(const std::string & name, Texture2d & out_texture) const
 		{
 			auto finded = m_properties.find(name);
 

@@ -2,10 +2,11 @@
 
 #include <string>
 #include <map>
+
 namespace engine
 {
 	namespace utility
-	{
+	{		
 		class ImageIOBase;
 
 		class ImageIo final
@@ -19,6 +20,7 @@ namespace engine
 
 			__declspec(dllexport)
 			void Write(const std::string & filename, const int width, const int heigh, const float * data);
+
 
 
 		private:

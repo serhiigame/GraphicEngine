@@ -88,11 +88,11 @@ int main(void)
 	const float * pData = engine::utility::ImageIo::Get().Load("../res/testImg.png", w, h);
 	engine::utility::ImageIo::Get().Write("../res/testImgWrite.png", w, h, pData);
 
-	engine::graphic::ITexture * tex = api->CreateTexture(w, h, engine::graphic::ETextureFormat::RGBA, engine::graphic::EDataType::FLOAT, engine::graphic::ETextureType::TEXTURE_2D);
+	engine::graphic::ITexture2D * tex = api->CreateTexture(w, h, engine::graphic::ETextureFormat::RGBA, engine::graphic::EDataType::FLOAT, engine::graphic::ETextureType::TEXTURE_2D);
 	tex->Write(0, w, 0, h, pData);
 
 	
-	//engine::graphic::ITexture  * fbTex = api->CreateTexture(1, 1, engine::graphic::ETextureFormat::RGB, engine::graphic::EDataType::FLOAT, engine::graphic::ETextureType::TEXTURE_2D);
+	//engine::graphic::ITexture2D  * fbTex = api->CreateTexture(1, 1, engine::graphic::ETextureFormat::RGB, engine::graphic::EDataType::FLOAT, engine::graphic::ETextureType::TEXTURE_2D);
 	//fbTex->Write(0, w, 0, h, pData);
 
 	//engine::graphic::IFramebuffer * fb = api->CreateFramebuffer(640, 480);

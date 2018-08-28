@@ -12,7 +12,7 @@ namespace engine
 		public:
 			static FramebufferGL * CreateFramebuffer(const size_t width, const size_t heigth);
 
-			virtual void AttachTextures(const TextureBindings & textures) override;
+			virtual void AttachTextures2d(const Texture2dBindings & textures) override;
 
 			virtual void Cleare() override;
 

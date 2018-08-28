@@ -26,7 +26,9 @@ namespace engine
 
 			virtual IConstant * CreateConatant(const size_t size);
 
-			virtual ITexture * CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType, const ETextureType type);
+			virtual ITexture2D * CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType);
+
+			virtual ITextureCubeMap * CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType);
 
 			virtual IFramebuffer * CreateFramebuffer(const size_t width, const size_t heigth);
 

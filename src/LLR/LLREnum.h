@@ -28,18 +28,25 @@ namespace engine
 
 		// TEXTURE
 
-		enum class ETextureType
-		{
-			TEXTURE_2D,
-			TEXTURE_CUBE,
-			NONE = -1
-		};
 
 		enum class ETextureFormat
 		{
 			RGB,
 			RGBA,
+			RGBf,
+			RGBAf,
 			NONE = -1
+		};
+
+		enum class ETextureCubeMapFace
+		{
+			NONE = -1
+			, BACK
+			, FRONT
+			, LEFT
+			, RIGHT
+			, TOP
+			, BUTTOM
 		};
 
 	}

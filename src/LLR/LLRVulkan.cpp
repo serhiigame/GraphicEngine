@@ -464,10 +464,16 @@ namespace engine
 			return nullptr;
 		}
 
-		ITexture * LlrVulkan::CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType, const ETextureType type)
+		ITexture2D * LlrVulkan::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
 		{
 			return nullptr;
 		}
+
+		ITextureCubeMap * LlrVulkan::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		{
+			return nullptr;
+		}
+
 
 		IFramebuffer * LlrVulkan::CreateFramebuffer(const size_t width, const size_t heigth)
 		{

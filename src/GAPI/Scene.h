@@ -13,6 +13,7 @@ namespace engine
 		class Mesh;
 		class Camera;
 		class PointLight;
+		class TextureCubeMap;
 
 		class Scene : public IResource
 		{
@@ -28,11 +29,16 @@ namespace engine
 
 			void AddPointLight(PointLight * mesh);
 
+			void SetSkybox(TextureCubeMap * cubemap);
+
+			TextureCubeMap * GetSkybox() const { return m_skybox; }
+
 			const std::vector< PointLight *> & GetPointLight() { return m_pointLights; }
 
 		protected:
 			std::vector< Mesh *> m_meshes;
 			std::vector< PointLight *> m_pointLights;
+			TextureCubeMap * m_skybox = nullptr;
 			Camera * m_camera = nullptr;
 		};
 	}

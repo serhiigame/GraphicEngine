@@ -6,17 +6,17 @@ namespace engine
 {
 	namespace graphic
 	{
-		class ITexture;
+		class ITexture2D;
 		
-		class Texture : public IResource
+		class Texture2d : public IResource
 		{
 			friend class GApi;
 			friend class GApiImpl;
 		public:
-			~Texture();
+			~Texture2d();
 
 		protected:
-			ITexture * m_texture = nullptr;
+			ITexture2D * m_texture = nullptr;
 		};
 	}
 }

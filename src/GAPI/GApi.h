@@ -13,10 +13,17 @@ namespace engine
 	namespace graphic
 	{
 		class GApiImpl;
+	
+		class Scene;
+
 		class Mesh;
 		class Camera;
+
+		class Texture2d;
+		class TextureCubeMap;
+
 		class PointLight;
-		class Scene;
+		
 
 		class GApi final
 		{
@@ -41,6 +48,18 @@ namespace engine
 
 			GAPI_EXPORT
 			void DeleteCamera(Camera * camera);
+
+			GAPI_EXPORT
+			Texture2d * CreateTexture2d(const size_t width, const size_t heigth);
+
+			GAPI_EXPORT
+			void DeleteTexture2d(Texture2d * texture2d);
+
+			GAPI_EXPORT
+			TextureCubeMap * CreateTextureCubeMap(const size_t size);
+
+			GAPI_EXPORT
+			void DeleteTextureCubeMap(TextureCubeMap * texture2d);
 
 			GAPI_EXPORT
 			PointLight * CreatePointLight();
@@ -71,6 +90,9 @@ namespace engine
 
 			GAPI_EXPORT
 			void SetSceneCamera(Scene * scene, Camera * camera);
+
+			GAPI_EXPORT
+			void SetSceneSkybox(Scene * scene, TextureCubeMap * skybox);
 
 			GAPI_EXPORT
 			void AddSceneMesh(Scene * scene, Mesh * mesh);

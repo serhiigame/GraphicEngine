@@ -10,10 +10,12 @@ namespace engine
 	{
 		class IBuffer;
 		class IConstant;
-		class ITexture;
+		class ITexture2D;
+		class ITextureCubeMap;
 
-		typedef std::map<int, ITexture * > TextureBindings;
-		typedef std::map<int, ITexture * > ConstantBindings;
+		typedef std::map<int, ITexture2D * > Texture2dBindings;
+		typedef std::map<int, ITextureCubeMap * > TextureCubeMapBindings;
+		typedef std::map<int, IConstant * > ConstantBindings;
 
 		extern enum class EDataType type;
 
@@ -26,7 +28,9 @@ namespace engine
 
 			virtual void AttachConstant(const IConstant * constant, const int location) = 0;
 
-			virtual  void AttachTexture(const ITexture * constant, const int location) = 0;
+			virtual void AttachTexture2d(const ITexture2D * texture, const int location) = 0;
+
+			virtual void AttachTextureCubeMap(const ITextureCubeMap * texture, const int location) = 0;
 		};
 	}
 }

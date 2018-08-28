@@ -1,6 +1,6 @@
 #include "FramebufferGL.h"
 
-#include "TextureGL.h"
+#include "Texture2dGL.h"
 
 #include <vector>
 #include <map>
@@ -27,7 +27,7 @@ namespace engine
 			return fb;
 		}
 
-		void FramebufferGL::AttachTextures(const TextureBindings & textures)
+		void FramebufferGL::AttachTextures2d(const Texture2dBindings & textures)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, GetId());
 			
@@ -38,7 +38,7 @@ namespace engine
 			for (auto textureBind : textures)
 			{
 				GLenum drawBuffer = GL_COLOR_ATTACHMENT0 + textureBind.first;
-				const TextureGL * textureGL = (const TextureGL *)textureBind.second;
+				const Texture2dGL * textureGL = (const Texture2dGL *)textureBind.second;
 				GLuint texId = textureGL->GetId();
 
 				glBindTexture(GL_TEXTURE_2D, texId);

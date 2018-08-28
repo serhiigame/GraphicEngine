@@ -42,13 +42,27 @@ namespace engine
 
 			}
 
-			for (const auto & texAttach : shaderGl->GetTextureAttach())
+			for (const auto & texAttach : shaderGl->GetTexture2dAttach())
 			{
 				const GLuint attachmenyId = texAttach.first;
 				const GLuint id = texAttach.second;
 
 				glActiveTexture(GL_TEXTURE0 + attachmenyId);
 				glBindTexture(GL_TEXTURE_2D, id);
+			}
+
+
+			for (const auto & texAttach : shaderGl->GetTextureCubeMapAttach())
+			{
+				const GLuint attachmenyId = texAttach.first;
+				const GLuint id = texAttach.second;
+
+				
+
+				glActiveTexture(GL_TEXTURE0 + attachmenyId);
+				//glBindTexture(GL_TEXTURE_2D, 0);
+
+				glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 			}
 
 			for (const auto & indexBuffInfo : shaderGl->GetIndexIds())

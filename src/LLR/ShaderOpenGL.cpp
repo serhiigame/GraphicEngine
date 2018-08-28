@@ -3,7 +3,8 @@
 #include "LlrOpenGL.h"
 #include "BufferGL.h"
 #include "ConstantGL.h"
-#include "TextureGL.h"
+#include "Texture2dGL.h"
+#include "TextureCubeMapGL.h"
 
 #include <GLEW/glew.h>
 
@@ -125,12 +126,19 @@ namespace engine
 
 			m_uniformBlock.emplace(location, constantGl->GetId());
 		}
-		void ShaderOpenGL::AttachTexture(const ITexture * texture, const int location)
+		void ShaderOpenGL::AttachTexture2d(const ITexture2D * texture, const int location)
 		{
-			const TextureGL * texGl = (const TextureGL *) texture;
+			const Texture2dGL * texGl = (const Texture2dGL *) texture;
 			const GLuint texId = texGl->GetId();
 
-			m_textureAttachment.emplace(location, texId);
+			m_texture2dAttachment.emplace(location, texId);
+		}
+		void ShaderOpenGL::AttachTextureCubeMap(const ITextureCubeMap * texture, const int location)
+		{
+			const TextureCubeMapGL * texGl = (const TextureCubeMapGL *)texture;
+			const GLuint texId = texGl->GetId();
+
+			m_textureCubeMapAttachment.emplace(location, texId);
 		}
 	}
 }

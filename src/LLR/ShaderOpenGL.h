@@ -23,7 +23,9 @@ namespace engine
 
 			virtual  void AttachConstant(const IConstant * constant, const int location)  override;
 
-			virtual  void AttachTexture(const ITexture * constant, const int location)  override;
+			virtual  void AttachTexture2d(const ITexture2D * texture, const int location)  override;
+
+			virtual  void AttachTextureCubeMap(const ITextureCubeMap * texture, const int location) override;
 
 			GLuint GetProgramId() const { return m_programId; }
 
@@ -33,7 +35,9 @@ namespace engine
 
 			const std::map<int, GLuint> & GetUniformBlock() const { return m_uniformBlock; }
 
-			const std::map<GLuint, GLuint> & GetTextureAttach() const { return m_textureAttachment; }
+			const std::map<GLuint, GLuint> & GetTexture2dAttach() const { return m_texture2dAttachment; }
+
+			const std::map<GLuint, GLuint> & GetTextureCubeMapAttach() const { return m_textureCubeMapAttachment; }
 
 			const std::map<GLuint, size_t> & GetIndexIds() const { return m_indexIds; }
 
@@ -45,7 +49,8 @@ namespace engine
 
 			std::set<GLuint> m_vertexAtributeIds;
 			std::map<int, GLuint> m_uniformBlock;
-			std::map<GLuint, GLuint> m_textureAttachment; // attachment index / texture id
+			std::map<GLuint, GLuint> m_texture2dAttachment; // attachment index / texture id
+			std::map<GLuint, GLuint> m_textureCubeMapAttachment; // attachment index / texture id
 			std::map<GLuint, size_t> m_indexIds;
 		};
 	}

@@ -7,6 +7,8 @@
 #include "Scene.h"
 #include "Mesh.h"
 #include "Camera.h"
+#include "Texture2d.h"
+#include "TextureCubeMap.h"
 #include "PointLight.h"
 
 namespace engine
@@ -39,7 +41,8 @@ namespace engine
 		{
 			IRenderPass * RenderPass;
 			IShader * Shader;
-			TextureBindings TextureInputs;
+			Texture2dBindings Texture2dInputs;
+			TextureCubeMapBindings TextureCubeMapInputs;
 			ConstantBindings ConstantInputs;
 			// BufferInputs
 
@@ -204,6 +207,35 @@ namespace engine
 				delete camera;
 			}
 
+			Texture2d * CreateTexture2d(size_t w, size_t h)
+			{
+				Texture2d * texture2d = new Texture2d;
+				m_resources.insert(texture2d);
+				texture2d->m_texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+				return texture2d;
+			}
+
+			void DeleteTexture2d(Texture2d * texture2d)
+			{
+				m_resources.erase(texture2d);
+				delete texture2d;
+			}
+
+			TextureCubeMap * CreateTextureCubeMap(size_t size)
+			{
+				TextureCubeMap * textureCubeMap = new TextureCubeMap;
+				m_resources.insert(textureCubeMap);
+				textureCubeMap->m_texture = m_llr->CreateTextureCubeMap(size, size, ETextureFormat::RGBAf, EDataType::FLOAT);
+				textureCubeMap->m_size = size;
+				return textureCubeMap;
+			}
+
+			void DeleteTextureCubeMap(TextureCubeMap * textureCubeMap)
+			{
+				m_resources.erase(textureCubeMap);
+				delete textureCubeMap;
+			}
+
 			PointLight * CreatePointLight()
 			{
 				PointLight * pointLight = new PointLight;
@@ -240,13 +272,18 @@ namespace engine
 				}
 			}
 
-			void RenderLights(const std::vector< PointLight *> & lights)
+			void RenderLights(const std::vector< PointLight *> & lights, TextureCubeMap * skybox = nullptr)
 			{
 				for (auto lightRenderStage : m_lightRenderStages)
 				{
 					IRenderPass * renderPass = lightRenderStage.RenderPass;
 					IShader * shader = lightRenderStage.Shader;
 					IFramebuffer * acumulator = lightRenderStage.OutputFramebuffer;
+
+					if (skybox)
+					{
+						shader->AttachTextureCubeMap(skybox->m_texture, 10);
+					}
 
 					for (PointLight * pointLight : lights)
 					{
@@ -278,11 +315,11 @@ namespace engine
 
 				m_gBufferFb = m_llr->CreateFramebuffer(w, h);
 
-				m_diffuseTexture = m_llr->CreateTexture(w, h, ETextureFormat::RGBA, EDataType::FLOAT, ETextureType::TEXTURE_2D);
-				m_positionTexture = m_llr->CreateTexture(w, h, ETextureFormat::RGBA, EDataType::FLOAT, ETextureType::TEXTURE_2D);
-				m_normalTexture = m_llr->CreateTexture(w, h, ETextureFormat::RGBA, EDataType::FLOAT, ETextureType::TEXTURE_2D);
+				m_diffuseTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+				m_positionTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+				m_normalTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 
-				m_gBufferFb->AttachTextures(TextureBindings({
+				m_gBufferFb->AttachTextures2d(Texture2dBindings({
 					{ globalTextureAttachment::Color, m_diffuseTexture }
 					,{ globalTextureAttachment::Position, m_positionTexture }
 					,{ globalTextureAttachment::Normal, m_normalTexture }
@@ -292,21 +329,21 @@ namespace engine
 			}
 
 			void InitLightRenderState() {
-				IShader * diffuseShader = m_llr->CreateShader("../res/shaders/Diffuse.vrt", "../res/shaders/Diffuse.pxl");
+				IShader * diffuseShader = m_llr->CreateShader("../res/shaders/Lambert.vrt", "../res/shaders/Lambert.pxl");
 
 				m_acumuFb = m_llr->CreateFramebuffer(w, h);
 
-				m_acumTexture = m_llr->CreateTexture(w, h, ETextureFormat::RGBA, EDataType::FLOAT, ETextureType::TEXTURE_2D);
+				m_acumTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 
-				m_acumuFb->AttachTextures(TextureBindings({ { 0, m_acumTexture } }));
+				m_acumuFb->AttachTextures2d(Texture2dBindings({ { 0, m_acumTexture } }));
 
 				RenderStage renderStage = CreateLightRenderStege(diffuseShader
-					, TextureBindings({
+					, Texture2dBindings({
 						{ globalTextureAttachment::Color, m_diffuseTexture }
 						,{ globalTextureAttachment::Position, m_positionTexture }
 						,{ globalTextureAttachment::Normal, m_normalTexture } })
-					,
-					m_acumuFb);
+					, TextureCubeMapBindings()
+					, m_acumuFb);
 
 				m_lightRenderStages.push_back(renderStage);
 			}
@@ -315,13 +352,16 @@ namespace engine
 				IShader * PEffectShader = m_llr->CreateShader("../res/shaders/BlackWhite.vrt", "../res/shaders/BlackWhite.pxl");
 
 				RenderStage renderStage = CreatePEffectRenderStage(PEffectShader
-					, TextureBindings({{ 0, m_acumTexture } })
+					, Texture2dBindings({{ 0, m_acumTexture } })
 					,					nullptr);
 
 				m_pEffectRenderStages.push_back(renderStage);
 			}
 
-			RenderStage CreateLightRenderStege(IShader * shader, const TextureBindings & inputs, IFramebuffer * output)
+			RenderStage CreateLightRenderStege(IShader * shader
+				, const Texture2dBindings & texture2dInputs
+				, const TextureCubeMapBindings & textureCubeMapInputs
+				, IFramebuffer * output)
 			{
 				if (!m_rectIndexBuffer)
 				{
@@ -333,16 +373,25 @@ namespace engine
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				renderStage.TextureInputs = inputs;
+				renderStage.Texture2dInputs = texture2dInputs;
+				renderStage.TextureCubeMapInputs = textureCubeMapInputs;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
-				for (auto textureInput : renderStage.TextureInputs)
+				for (auto texture2dInput : renderStage.Texture2dInputs)
 				{
-					const uint32_t textureLocation = textureInput.first;
-					const ITexture * texture = textureInput.second;
+					const uint32_t textureLocation = texture2dInput.first;
+					const ITexture2D * texture = texture2dInput.second;
 
-					renderStage.Shader->AttachTexture(texture, textureLocation);
+					renderStage.Shader->AttachTexture2d(texture, textureLocation);
+				}
+
+				for (auto textureCubeMapInput : renderStage.TextureCubeMapInputs)
+				{
+					const uint32_t textureLocation = textureCubeMapInput.first;
+					const ITextureCubeMap * texture = textureCubeMapInput.second;
+
+					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
 				}
 
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
@@ -353,21 +402,21 @@ namespace engine
 				return renderStage;
 			}
 
-			RenderStage CreatePEffectRenderStage(IShader * shader, const TextureBindings & inputs, IFramebuffer * output )
+			RenderStage CreatePEffectRenderStage(IShader * shader, const Texture2dBindings & inputs, IFramebuffer * output )
 			{
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				renderStage.TextureInputs = inputs;
+				renderStage.Texture2dInputs = inputs;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 				
-				for ( auto textureInput : renderStage.TextureInputs)
+				for ( auto textureInput : renderStage.Texture2dInputs)
 				{
 					const uint32_t textureLocation = textureInput.first;
-					const ITexture * texture = textureInput.second;
+					const ITexture2D * texture = textureInput.second;
 					
-					renderStage.Shader->AttachTexture(texture, textureLocation);
+					renderStage.Shader->AttachTexture2d(texture, textureLocation);
 				}
 
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
@@ -414,13 +463,13 @@ namespace engine
 			IFramebuffer * m_gBufferFb = nullptr;
 			IFramebuffer * m_acumuFb = nullptr;
 
-			ITexture * m_diffuseTexture = nullptr;
-			ITexture * m_positionTexture = nullptr;
-			ITexture * m_normalTexture = nullptr;
+			ITexture2D * m_diffuseTexture = nullptr;
+			ITexture2D * m_positionTexture = nullptr;
+			ITexture2D * m_normalTexture = nullptr;
 
 			IBuffer * m_rectIndexBuffer = nullptr;
 
-			ITexture * m_acumTexture = nullptr;
+			ITexture2D * m_acumTexture = nullptr;
 
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
@@ -471,6 +520,26 @@ namespace engine
 			m_impl->DeleteCamera(camera);
 		}
 
+		Texture2d * GApi::CreateTexture2d(const size_t width, const size_t heigth)
+		{
+			return m_impl->CreateTexture2d(width, heigth);
+		}
+
+		void GApi::DeleteTexture2d(Texture2d * texture2d)
+		{
+			m_impl->DeleteTexture2d(texture2d);
+		}
+
+		TextureCubeMap * GApi::CreateTextureCubeMap(size_t size)
+		{
+			return m_impl->CreateTextureCubeMap(size);
+		}
+
+		void GApi::DeleteTextureCubeMap(TextureCubeMap * textureCubeMap)
+		{
+			m_impl->DeleteTextureCubeMap(textureCubeMap);
+		}
+
 		void GApi::SetCameraView(Camera * camera, const Mat4f & view)
 		{
 			Llr * llr = m_impl->GetLlr();
@@ -512,6 +581,11 @@ namespace engine
 			scene->SetCamera(camera);
 		}
 
+		void GApi::SetSceneSkybox(Scene * scene, TextureCubeMap * skybox)
+		{
+			scene->SetSkybox(skybox);
+		}
+
 		void GApi::AddSceneMesh(Scene * scene, Mesh * mesh)
 		{
 			scene->AddMesh(mesh);
@@ -528,7 +602,7 @@ namespace engine
 
 			m_impl->RenderGeometry(scene->GetMeshes(), scene->GetCamera());
 
-			m_impl->RenderLights(scene->GetPointLight());
+			m_impl->RenderLights(scene->GetPointLight(), scene->GetSkybox());
 			
 			m_impl->RenderPEffects();
 

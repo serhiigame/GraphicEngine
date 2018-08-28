@@ -15,6 +15,11 @@ namespace engine
 			m_pointLights.push_back(pointLight);
 		}
 
+		void Scene::SetSkybox(TextureCubeMap * cubemap)
+		{
+			m_skybox = cubemap;
+		}
+
 		void Scene::SetCamera(Camera * camera)
 		{
 			m_camera = camera;

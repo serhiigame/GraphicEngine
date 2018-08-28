@@ -8,7 +8,8 @@
 #include "IShader.h"
 #include "IBuffer.h"
 #include "IConstant.h"
-#include "ITexture.h"
+#include "ITexture2D.h"
+#include "ITextureCubeMap.h"
 #include "IFramebuffer.h"
 #include "IRenderPass.h"
 
@@ -45,7 +46,10 @@ namespace engine
 			virtual IConstant * CreateConatant(const size_t size) = 0;
 
 			__declspec(dllexport)
-			virtual ITexture * CreateTexture(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType, const ETextureType type) = 0;
+			virtual ITexture2D * CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType) = 0;
+
+			__declspec(dllexport)
+				virtual ITextureCubeMap * CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType) = 0;
 
 			__declspec(dllexport)
 			virtual IFramebuffer * CreateFramebuffer(const size_t width, const size_t heigth) = 0;

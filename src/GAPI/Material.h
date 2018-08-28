@@ -2,7 +2,7 @@
 
 #include "IResource.h"
 
-#include "Texture.h"
+#include "Texture2d.h"
 
 #include <map>
 
@@ -22,7 +22,7 @@ namespace engine
 		struct MaterialProperty
 		{
 			MaterialPropertyType Type;
-			Texture Texture;
+			Texture2d Texture;
 			//int Int;
 			//float Float;
 		};
@@ -34,9 +34,9 @@ namespace engine
 		public:
 			const std::map<std::string, MaterialProperty> & GetProperties() const;
 
-			void SetProperty(const std::string & name, const Texture & texture);
+			void SetProperty(const std::string & name, const Texture2d & texture);
 
-			void GetProperty(const std::string & name, Texture & out_texture) const;
+			void GetProperty(const std::string & name, Texture2d & out_texture) const;
 
 		protected:
 			std::map<std::string, MaterialProperty> m_properties;
