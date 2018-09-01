@@ -6,9 +6,12 @@
 
 #include "Scene.h"
 #include "Mesh.h"
+#include "Material.h"
 #include "Camera.h"
 #include "Texture2d.h"
 #include "TextureCubeMap.h"
+#include "Shader.h"
+#include "ShaderInputs.h"
 #include "PointLight.h"
 
 namespace engine
@@ -37,17 +40,51 @@ namespace engine
 			constexpr int Normal = 2;
 		}
 
+		struct RanderStageShaderInputs
+		{
+			Texture2dBindings Texture2dInputs;
+			TextureCubeMapBindings TextureCubeMapInputs;
+			ConstantBindings ConstantInputs;
+		};
+
 		struct RenderStage
 		{
 			IRenderPass * RenderPass;
 			IShader * Shader;
-			Texture2dBindings Texture2dInputs;
-			TextureCubeMapBindings TextureCubeMapInputs;
-			ConstantBindings ConstantInputs;
+
+			//RanderStageShaderInputs GloabalShaderInputs;
+			std::vector<RanderStageShaderInputs> ShaderInputs;
+
+			
+			//Texture2dBindings Texture2dInputs;
+			//TextureCubeMapBindings TextureCubeMapInputs;
+			//ConstantBindings ConstantInputs;
 			// BufferInputs
 
 			IFramebuffer * OutputFramebuffer;
 
+		};
+
+		class MaterialObject
+		{
+
+		public:
+			bool IsValid() const { return m_materialId != NULL; }
+
+			int GetMaterilId() const { return m_materialId; }
+
+			void SetMaterilId(const int id) { m_materialId = id; }
+
+			void AddMaterialInstance(Material * material)
+			{
+				m_materials.push_back(material);
+			}
+
+			std::vector<Material *> & GetMaterialInstances() { return m_materials; }
+
+		private:
+			std::vector<Material *> m_materials;
+			int m_materialId = NULL;
 		};
 
 		class GApiImpl
@@ -182,6 +219,107 @@ namespace engine
 				delete mesh;
 			}
 
+			MaterialHandler RegisterMaterial(MaterialInfo & materialInfo)
+			{
+				int materialId = m_materialIdCounter++;
+
+				Shader * shader = CreateShader(materialInfo.vertShaderPath, materialInfo.fragShaderPath);
+
+				if (!shader)
+				{
+					return MaterialHandler();
+				}
+
+				MaterialObject materialObject;
+
+				m_materials[materialId].Shader = shader;
+				m_materials[materialId].MaterialInputDescs = materialInfo.Descriptions;
+
+				materialObject.SetMaterilId(materialId);
+
+				RanderStageShaderInputs globalShaderInputs;
+				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Color] = m_diffuseTexture;
+				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Position] = m_positionTexture;
+				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Normal] = m_normalTexture;
+
+				RenderStage renderStage = CreateLightRenderStege(shader->m_shader, globalShaderInputs, m_acumuFb);
+
+				m_lightRenderStages.push_back(renderStage);
+
+				m_materialObjects[materialId] = std::move(materialObject);
+
+				MaterialHandler materialHandler;
+				materialHandler.m_materialId = materialId;
+
+				return materialHandler;
+			}
+
+			Material * CreateMaterial(MaterialHandler & handler)
+			{
+				int materialId = handler.GetMaterialId();
+				
+				auto findedMaterialObject = m_materialObjects.find(materialId);
+
+				if (findedMaterialObject == m_materialObjects.end())
+				{
+					return nullptr;
+				}
+	
+
+				MaterialObject & materialObject = findedMaterialObject->second;
+				MaterialDescription & matDesc =  m_materials[materialObject.GetMaterilId()];
+
+				Material * material = new Material;
+				material->m_materialId = materialObject.GetMaterilId();
+
+				for (auto inpudDesc : matDesc.MaterialInputDescs)
+				{
+					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
+					{
+						material->m_materialInputs[inpudDesc.Binding] = shaderInput;
+					}
+				}
+
+				materialObject.AddMaterialInstance(material);
+
+				m_resources.insert(material);
+				return material;
+			}
+
+			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
+			{
+				const std::vector<MaterialInputDesc> & descriptions = m_materials.at(material->m_materialId).MaterialInputDescs;
+
+				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const MaterialInputDesc & decs)->bool {return decs.Name == paramName; });
+
+				if (findedMatDesc == descriptions.end())
+				{
+					return;
+				}
+
+				auto materialInputs = material->m_materialInputs;
+				auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
+
+				if (findedShaderInput == materialInputs.end())
+				{
+					return;
+				}
+
+				IShaderInput * shaderInput = findedShaderInput->second;
+
+				if (shaderInput->GetShaderInputType() != EShaderInputType::CONSTANT)
+				{
+					return;
+				}
+
+				SetShaderInput(shaderInput, param);
+			}
+
+			void DeleteMaterial(Material * material) {
+				m_resources.erase(material);
+				delete material;
+			}
+
 			Camera * CreateCamera()
 			{
 				Camera * camera = new Camera;
@@ -213,6 +351,20 @@ namespace engine
 				m_resources.insert(texture2d);
 				texture2d->m_texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 				return texture2d;
+			}
+
+			Shader * CreateShader(std::string vert, std::string frag)
+			{
+				Shader * shader = new Shader;
+				shader->m_shader = m_llr->CreateShader(vert, frag);
+				m_resources.insert(shader);
+				return shader;
+			}
+
+			void DeleteShader(Shader * shader)
+			{
+				m_resources.erase(shader);
+				delete shader;
 			}
 
 			void DeleteTexture2d(Texture2d * texture2d)
@@ -287,8 +439,27 @@ namespace engine
 
 					for (PointLight * pointLight : lights)
 					{
+						// TODO: set global constant
 						shader->AttachConstant(pointLight->m_pointLight, 1);
-						renderPass->Execute(shader, acumulator);
+
+						for (auto materialObjectIt : m_materialObjects) {
+							auto & materialObject = materialObjectIt.second;
+							for (auto materialInstances : materialObject.GetMaterialInstances())
+							{
+								for (auto materialInput : materialInstances->m_materialInputs)
+								{
+									int binding = materialInput.first;
+									IShaderInput * shaderInput = materialInput.second;
+
+									if (shaderInput->GetShaderInputType() == EShaderInputType::CONSTANT)
+									{
+										shader->AttachConstant(((ShaderInputConstant *)shaderInput)->m_constant, binding);
+									}
+								}
+
+								renderPass->Execute(shader, acumulator);
+							}
+						}
 					}
 				}
 			}
@@ -329,7 +500,7 @@ namespace engine
 			}
 
 			void InitLightRenderState() {
-				IShader * diffuseShader = m_llr->CreateShader("../res/shaders/Lambert.vrt", "../res/shaders/Lambert.pxl");
+				//IShader * diffuseShader = m_llr->CreateShader("../res/shaders/Lambert.vrt", "../res/shaders/Lambert.pxl");
 
 				m_acumuFb = m_llr->CreateFramebuffer(w, h);
 
@@ -337,7 +508,7 @@ namespace engine
 
 				m_acumuFb->AttachTextures2d(Texture2dBindings({ { 0, m_acumTexture } }));
 
-				RenderStage renderStage = CreateLightRenderStege(diffuseShader
+				/*RenderStage renderStage = CreateLightRenderStege(diffuseShader
 					, Texture2dBindings({
 						{ globalTextureAttachment::Color, m_diffuseTexture }
 						,{ globalTextureAttachment::Position, m_positionTexture }
@@ -345,22 +516,28 @@ namespace engine
 					, TextureCubeMapBindings()
 					, m_acumuFb);
 
-				m_lightRenderStages.push_back(renderStage);
+				m_lightRenderStages.push_back(renderStage);*/
 			}
 
 			void InitPostEffectsRenderState() {
 				IShader * PEffectShader = m_llr->CreateShader("../res/shaders/BlackWhite.vrt", "../res/shaders/BlackWhite.pxl");
 
+				RanderStageShaderInputs globalShaderInputs;
+
+				// TODO: use global
+				globalShaderInputs.Texture2dInputs[0] = m_acumTexture;
+
 				RenderStage renderStage = CreatePEffectRenderStage(PEffectShader
-					, Texture2dBindings({{ 0, m_acumTexture } })
-					,					nullptr);
+					, globalShaderInputs
+					, nullptr);
 
 				m_pEffectRenderStages.push_back(renderStage);
 			}
 
 			RenderStage CreateLightRenderStege(IShader * shader
-				, const Texture2dBindings & texture2dInputs
-				, const TextureCubeMapBindings & textureCubeMapInputs
+				//, const Texture2dBindings & texture2dInputs
+				//, const TextureCubeMapBindings & textureCubeMapInputs
+				, const RanderStageShaderInputs & globalShaderInputs
 				, IFramebuffer * output)
 			{
 				if (!m_rectIndexBuffer)
@@ -373,12 +550,29 @@ namespace engine
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				renderStage.Texture2dInputs = texture2dInputs;
-				renderStage.TextureCubeMapInputs = textureCubeMapInputs;
+				//renderStage.Texture2dInputs = texture2dInputs;
+				//renderStage.TextureCubeMapInputs = textureCubeMapInputs;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
-				for (auto texture2dInput : renderStage.Texture2dInputs)
+
+				for (auto texture2dInput : globalShaderInputs.Texture2dInputs)
+				{
+					const uint32_t textureLocation = texture2dInput.first;
+					const ITexture2D * texture = texture2dInput.second;
+
+					renderStage.Shader->AttachTexture2d(texture, textureLocation);
+				}
+
+				for (auto textureCubeMapInput : globalShaderInputs.TextureCubeMapInputs)
+				{
+					const uint32_t textureLocation = textureCubeMapInput.first;
+					const ITextureCubeMap * texture = textureCubeMapInput.second;
+
+					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
+				}
+
+				/*for (auto texture2dInput : renderStage.Texture2dInputs)
 				{
 					const uint32_t textureLocation = texture2dInput.first;
 					const ITexture2D * texture = texture2dInput.second;
@@ -392,30 +586,30 @@ namespace engine
 					const ITextureCubeMap * texture = textureCubeMapInput.second;
 
 					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
-				}
+				}*/
 
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
 				uint32_t rectIndexCount = GetRectIndexCount();
 				EDataType rectIndexType = GetRectIndexType();
 				renderStage.Shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
-				
+
 				return renderStage;
 			}
 
-			RenderStage CreatePEffectRenderStage(IShader * shader, const Texture2dBindings & inputs, IFramebuffer * output )
+			RenderStage CreatePEffectRenderStage(IShader * shader, const RanderStageShaderInputs & inputs, IFramebuffer * output)
 			{
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				renderStage.Texture2dInputs = inputs;
-				renderStage.OutputFramebuffer = output;
+				//renderStage.Texture2dInputs = inputs;
+				//renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
-				
-				for ( auto textureInput : renderStage.Texture2dInputs)
+
+				for (auto textureInput : inputs.Texture2dInputs)
 				{
 					const uint32_t textureLocation = textureInput.first;
 					const ITexture2D * texture = textureInput.second;
-					
+
 					renderStage.Shader->AttachTexture2d(texture, textureLocation);
 				}
 
@@ -427,7 +621,52 @@ namespace engine
 				return renderStage;
 			}
 
+			template<class T>
+			IShaderInput * CreateShaderInput()
+			{
+				IConstant * constant = m_llr->CreateConatant(sizeof(T));
+				ShaderInputConstant * shaderInput = new ShaderInputConstant;
 
+				shaderInput->m_constant = constant;
+
+				return shaderInput;
+			}
+
+			IShaderInput * CreateShaderInput(const EMaterialInputType type)
+			{
+				
+				switch (type)
+				{
+				case EMaterialInputType::VEC4F:
+					return CreateShaderInput<Vec4f>();
+				default:
+					break;
+				}
+
+				return nullptr;
+			}
+
+			template<class T>
+			void SetShaderInput(IShaderInput * shaderInput, const T & data)
+			{
+				if (!shaderInput)
+				{
+					return;
+				}
+
+				if (shaderInput->GetShaderInputType() != EShaderInputType::CONSTANT)
+				{
+					return;
+				}
+
+				ShaderInputConstant * constant = ((ShaderInputConstant *)shaderInput);
+				constant->m_constant->Write(0, sizeof(T), &data);
+			}
+
+			void DeleteShaderInput(IShaderInput * shaderInput)
+			{
+				delete shaderInput;
+			}
 
 			void RenderGBuffer() {
 				m_gBufferRenderPass->Execute(m_gBufferShader, m_gBufferFb);
@@ -474,7 +713,15 @@ namespace engine
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
+
+			std::map<int, MaterialDescription> m_materials;
+
+			int m_materialIdCounter = 1;
+			int m_materialInstanceIdCounter = 1;
+
+
 			std::set<IResource *> m_resources;
+			std::map<int, MaterialObject> m_materialObjects; // materialId / materialObject
 		};
 		
 		GApi::GApi()
@@ -508,6 +755,25 @@ namespace engine
 		void GApi::DeleteMesh(Mesh * mesh)
 		{
 			m_impl->DeleteMesh(mesh);
+		}
+
+		MaterialHandler GApi::RegisterMaterial(MaterialInfo & materialInfo)
+		{
+			return m_impl->RegisterMaterial(materialInfo);
+		}
+
+		Material * GApi::CreateMaterial(MaterialHandler & handler)
+		{
+			return m_impl->CreateMaterial(handler);
+		}
+
+		void GApi::SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
+		{
+			m_impl->SetMaterialParameterF4(material, paramName, param);
+		}
+
+		void GApi::DeleteMaterial(Material * material) {
+			m_impl->DeleteMaterial(material);
 		}
 
 		Camera * GApi::CreateCamera()
@@ -566,6 +832,11 @@ namespace engine
 			mesh->m_transform->Write(0, sizeof(Mat4f), &transform[0]);
 		}
 
+		void GApi::SetMeshMaterial(Mesh * mesh, Material * material)
+		{
+			material->m_meshes.push_back(mesh);
+		}
+
 		void GApi::SetPointLightPosition(PointLight * light, const Vec3f & position)
 		{
 			light->m_pointLight->Write(0, sizeof(Vec3f), &position[0]);
@@ -603,11 +874,10 @@ namespace engine
 			m_impl->RenderGeometry(scene->GetMeshes(), scene->GetCamera());
 
 			m_impl->RenderLights(scene->GetPointLight(), scene->GetSkybox());
-			
+
 			m_impl->RenderPEffects();
 
 			return ERenderStatus::SUCCESS;
 		}
 	}
-
 }

@@ -19,6 +19,10 @@ layout (std140, binding = 1) uniform PointLight {
 	vec4 positionAndIntensity;
 } u_PointLight;
 
+layout (std140, binding = 8) uniform MaterialParam {
+	vec4 param;
+} u_MaterialParam;
+
 void main() { 
 	vec3 position = texture(pos, v_uv).xyz;
 	//vec3 pointLightPos = (u_PointLight.positionAndIntensity).xyz;
@@ -29,7 +33,8 @@ void main() {
 
 	//color = vec4(vec3(texture(pos, v_uv).z / 5), 1.);
 	//color = texture(norm, v_uv) ;
-	color = texture(difColor, v_uv) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
+	//color = texture(difColor, v_uv) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
+	color = u_MaterialParam.param * 0.2 + texture(difColor, v_uv) * 0.1;
 
 	//vec3 L = pointLightPos - position;
 	//color = texture(norm, v_uv);

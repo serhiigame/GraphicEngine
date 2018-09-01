@@ -17,10 +17,18 @@ namespace engine
 		class Scene;
 
 		class Mesh;
+
+		class Material;
+		class MaterialInfo;
+		class MaterialHandler;
+
 		class Camera;
 
 		class Texture2d;
 		class TextureCubeMap;
+
+		class Shader;
+		class IShaderInput;
 
 		class PointLight;
 		
@@ -74,6 +82,18 @@ namespace engine
 			void DeleteMesh(Mesh * mesh);
 
 			GAPI_EXPORT
+			MaterialHandler RegisterMaterial(MaterialInfo & materialInfo);
+
+			GAPI_EXPORT
+			Material * CreateMaterial(MaterialHandler & handler);
+
+			GAPI_EXPORT
+			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param);
+
+			GAPI_EXPORT
+			void DeleteMaterial(Material * material);
+
+			GAPI_EXPORT
 			void SetCameraView(Camera * camera, const Mat4f & view);
 
 			GAPI_EXPORT
@@ -81,6 +101,9 @@ namespace engine
 
 			GAPI_EXPORT
 			void SetMeshTransform(Mesh * mesh, const Mat4f & transform);
+
+			GAPI_EXPORT
+			void SetMeshMaterial(Mesh * mesh, Material * material);
 
 			GAPI_EXPORT
 			void SetPointLightPosition(PointLight * light, const Vec3f & position);
