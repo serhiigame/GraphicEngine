@@ -3,8 +3,6 @@ layout(location = 0) in vec3 vertexPos;
 layout(location = 1) in vec3 vertexNorm;
 layout(location = 2) in vec2 vertexUv;
 
-//out vec2 v_uv;
-
 layout (std140, binding = 0) uniform Model {
 	mat4 transform;
 } u_Model;
@@ -17,8 +15,9 @@ layout (std140, binding = 8) uniform Camara {
 
 out vec3 v_pos;
 out vec3 v_norm;
+out vec2 v_uv;
 void main(){
-	//v_uv = uv;
+	v_uv = vertexUv;
 	vec4 pos = u_Camara.projection * u_Camara.view * u_Model.transform * vec4(vertexPos, 1.f);
 	
 	v_pos = pos.xyz ;

@@ -31,6 +31,7 @@ namespace engine
 		{
 			constexpr int Position = 0;
 			constexpr int Normal = 1;
+			constexpr int Uv = 2;
 		}
 
 		namespace globalTextureAttachment
@@ -38,6 +39,7 @@ namespace engine
 			constexpr int Color = 0;
 			constexpr int Position = 1;
 			constexpr int Normal = 2;
+			constexpr int Uv = 3;
 		}
 
 		struct RanderStageShaderInputs
@@ -149,6 +151,12 @@ namespace engine
 					m_normalTexture = nullptr;
 				}
 
+				if (m_uvTexture)
+				{
+					delete m_uvTexture;
+					m_uvTexture = nullptr;
+				}
+
 
 				if (m_rectIndexBuffer)
 				{
@@ -169,6 +177,7 @@ namespace engine
 			void BingMesh(Mesh * mesh) {
 				m_gBufferShader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
 				m_gBufferShader->AttachAttribute(mesh->m_norm, globalBufferAttchment::Normal, 0, 3, EDataType::FLOAT);
+				m_gBufferShader->AttachAttribute(mesh->m_uv, globalBufferAttchment::Uv, 0, 2, EDataType::FLOAT);
 				//m_gBufferShader->AttachConstant(mesh->m_transform, 0);
 
 				IBuffer * idx = mesh->m_idx;
@@ -199,10 +208,12 @@ namespace engine
 
 				mesh->m_pos = m_llr->CreateBuffer(sizeof(meshData.Positions[0]) * meshData.Positions.size());
 				mesh->m_norm = m_llr->CreateBuffer(sizeof(meshData.Normals[0]) * meshData.Normals.size());
+				mesh->m_uv = m_llr->CreateBuffer(sizeof(meshData.Positions[0]) * meshData.Positions.size());
 				mesh->m_idx = m_llr->CreateIndexBuffer(sizeof(meshData.Indexes[0]) * meshData.Indexes.size());
 
 				mesh->m_pos->Write(0, sizeof(meshData.Positions[0]) * meshData.Positions.size(), meshData.Positions.data());
 				mesh->m_norm->Write(0, sizeof(meshData.Normals[0]) * meshData.Normals.size(), meshData.Normals.data());
+				mesh->m_uv->Write(0, sizeof(meshData.Uv[0]) * meshData.Uv.size(), meshData.Uv.data());
 				mesh->m_idx->Write(0, sizeof(meshData.Indexes[0]) * meshData.Indexes.size(), meshData.Indexes.data());
 
 				Mat4f transformMat;
@@ -241,6 +252,7 @@ namespace engine
 				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Color] = m_diffuseTexture;
 				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Position] = m_positionTexture;
 				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Normal] = m_normalTexture;
+				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Uv] = m_uvTexture;
 
 				RenderStage renderStage = CreateLightRenderStege(shader->m_shader, globalShaderInputs, m_acumuFb);
 
@@ -489,11 +501,13 @@ namespace engine
 				m_diffuseTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 				m_positionTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 				m_normalTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+				m_uvTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 
 				m_gBufferFb->AttachTextures2d(Texture2dBindings({
 					{ globalTextureAttachment::Color, m_diffuseTexture }
 					,{ globalTextureAttachment::Position, m_positionTexture }
 					,{ globalTextureAttachment::Normal, m_normalTexture }
+					,{ globalTextureAttachment::Uv, m_uvTexture }
 				}));
 
 				m_gBufferRenderPass = m_llr->CreateRenderPass();
@@ -705,6 +719,7 @@ namespace engine
 			ITexture2D * m_diffuseTexture = nullptr;
 			ITexture2D * m_positionTexture = nullptr;
 			ITexture2D * m_normalTexture = nullptr;
+			ITexture2D * m_uvTexture = nullptr;
 
 			IBuffer * m_rectIndexBuffer = nullptr;
 

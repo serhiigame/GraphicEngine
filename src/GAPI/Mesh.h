@@ -47,6 +47,7 @@ namespace engine
 		protected:
 			IBuffer * m_pos = nullptr;
 			IBuffer * m_norm = nullptr;
+			IBuffer * m_uv = nullptr;
 			IBuffer * m_idx = nullptr;
 			IConstant * m_transform = nullptr;
 		};

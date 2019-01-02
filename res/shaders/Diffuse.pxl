@@ -2,8 +2,9 @@
 layout(binding = 0) uniform sampler2D difColor;
 layout(binding = 1) uniform sampler2D pos;
 layout(binding = 2) uniform sampler2D norm;
+layout(binding = 3) uniform sampler2D uv;
 
-in vec2 v_uv;
+in vec2 v_iuv;
 layout (location = 0) out vec4 color;
 
 layout (std140, binding = 0) uniform Model {
@@ -24,36 +25,38 @@ layout (std140, binding = 9) uniform MaterialParam {
 } u_MaterialParam;
 
 void main() { 
-	vec3 position = texture(pos, v_uv).xyz;
+	vec3 position = texture(pos, v_iuv).xyz;
 	//vec3 pointLightPos = (u_PointLight.positionAndIntensity).xyz;
 	//vec3 pointLightPos = (u_Camara.view *vec4((u_PointLight.positionAndIntensity).xyz, 0.)).xyz; 
 	//vec3 L = pointLightPos - position;
 
 
 	vec3 pointLightPos = (   vec4(vec3(0.,0.0, -0.02), 1.)).xyz;   ;
-	vec4 worldPosition =   inverse( u_Camara.projection * u_Camara.view) * vec4(texture(pos, v_uv).xyz, 1.);
-	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_uv).xyz, 1.);
+	vec4 worldPosition =   inverse( u_Camara.projection * u_Camara.view) * vec4(texture(pos, v_iuv).xyz, 1.);
+	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_iuv).xyz, 1.);
 	//worldPosition /= worldPosition.w;
 	vec3 L = pointLightPos - worldPosition.xyz;
-	vec3 N =  texture(norm, v_uv).xyz;
+	vec3 N =  texture(norm, v_iuv).xyz;
 	
-	color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(N), normalize(L)), 0.01,1.);
+	color = texture(uv, v_iuv);
 
-	//color = vec4(vec3(texture(pos, v_uv).z / 5), 1.);
-	//color = texture(norm, v_uv) ;
-	//color = texture(difColor, v_uv) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
-	//color = u_MaterialParam.param * 0.2 + texture(difColor, v_uv) * 0.1;
-	//color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
+	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(N), normalize(L)), 0.01,1.);
+
+	//color = vec4(vec3(texture(pos, v_iuv).z / 5), 1.);
+	//color = texture(norm, v_iuv) ;
+	//color = texture(difColor, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+	//color = u_MaterialParam.param * 0.2 + texture(difColor, v_iuv) * 0.1;
+	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 
 	//vec3 L = pointLightPos - position;
-	//color = texture(norm, v_uv);
-	//color = texture(difColor, v_uv) * dot(normalize(texture(norm, v_uv)).xyz,normalize(-L));
+	//color = texture(norm, v_iuv);
+	//color = texture(difColor, v_iuv) * dot(normalize(texture(norm, v_iuv)).xyz,normalize(-L));
 	//color = vec4(normalize(-L) * 0.5 + 0.5, 1);
-	//color = texture(difColor, v_uv) * dot(normalize(texture(norm, v_uv).xyz), normalize(L));
+	//color = texture(difColor, v_iuv) * dot(normalize(texture(norm, v_iuv).xyz), normalize(L));
 	//color = vec4(1., 0., 0., 1.);
 
 
 
 
-	//color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
+	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 }

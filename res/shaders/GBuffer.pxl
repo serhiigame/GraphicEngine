@@ -13,19 +13,22 @@
 //layout(binding = 7) uniform sampler2D tex;
 
 //in vec3 v_color;
-//in vec2 v_uv;
+
 
 in vec3 v_pos;
 in vec3 v_norm;
+in vec2 v_uv;
 
 
 layout (location = 0) out vec4 diffuse;
 layout (location = 1) out vec4 position;
 layout (location = 2) out vec4 normal;
+layout (location = 3) out vec4 uv;
 
 
 void main() { 
 	diffuse = vec4(0., 0., 1., 1.);
 	position = vec4(v_pos, 1.f); 
 	normal = vec4(v_norm, 1.f);
+	uv = vec4(v_uv, 0., 1.);
 }

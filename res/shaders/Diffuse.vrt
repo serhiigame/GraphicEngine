@@ -1,6 +1,6 @@
 #version 440 core
 
-out vec2 v_uv;
+out vec2 v_iuv;
 
 void main(){
 	const vec2[4] uv = vec2[4] (
@@ -10,6 +10,6 @@ void main(){
 		vec2(1., 0.)		
 	);
 	
-	v_uv = uv[gl_VertexID];
+	v_iuv = uv[gl_VertexID];
 	gl_Position = vec4( (uv[gl_VertexID].xy - 0.5) * 2, 0., 1.0);
 }
