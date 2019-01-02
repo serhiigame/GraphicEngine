@@ -19,22 +19,31 @@ layout (std140, binding = 1) uniform PointLight {
 	vec4 positionAndIntensity;
 } u_PointLight;
 
-layout (std140, binding = 8) uniform MaterialParam {
+layout (std140, binding = 9) uniform MaterialParam {
 	vec4 param;
 } u_MaterialParam;
 
 void main() { 
 	vec3 position = texture(pos, v_uv).xyz;
 	//vec3 pointLightPos = (u_PointLight.positionAndIntensity).xyz;
-	vec3 pointLightPos = (u_Camara.view *vec4((u_PointLight.positionAndIntensity).xyz, 0.)).xyz; 
-	//pointLightPos = (u_Camara.view *vec4(vec3(0.,5., 0.), 0.)).xyz;   ;
-	vec3 L = pointLightPos - position;
+	//vec3 pointLightPos = (u_Camara.view *vec4((u_PointLight.positionAndIntensity).xyz, 0.)).xyz; 
+	//vec3 L = pointLightPos - position;
 
+
+	vec3 pointLightPos = (   vec4(vec3(0.,0.0, -0.02), 1.)).xyz;   ;
+	vec4 worldPosition =   inverse( u_Camara.projection * u_Camara.view) * vec4(texture(pos, v_uv).xyz, 1.);
+	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_uv).xyz, 1.);
+	//worldPosition /= worldPosition.w;
+	vec3 L = pointLightPos - worldPosition.xyz;
+	vec3 N =  texture(norm, v_uv).xyz;
+	
+	color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(N), normalize(L)), 0.01,1.);
 
 	//color = vec4(vec3(texture(pos, v_uv).z / 5), 1.);
 	//color = texture(norm, v_uv) ;
 	//color = texture(difColor, v_uv) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
-	color = u_MaterialParam.param * 0.2 + texture(difColor, v_uv) * 0.1;
+	//color = u_MaterialParam.param * 0.2 + texture(difColor, v_uv) * 0.1;
+	//color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
 
 	//vec3 L = pointLightPos - position;
 	//color = texture(norm, v_uv);
@@ -42,4 +51,9 @@ void main() {
 	//color = vec4(normalize(-L) * 0.5 + 0.5, 1);
 	//color = texture(difColor, v_uv) * dot(normalize(texture(norm, v_uv).xyz), normalize(L));
 	//color = vec4(1., 0., 0., 1.);
+
+
+
+
+	//color = u_MaterialParam.param * length(texture(difColor, v_uv)) * clamp(dot( normalize(-texture(norm, v_uv).xyz), normalize(-L)), 0.01,1.);
 }

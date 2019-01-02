@@ -30,6 +30,4 @@ void DemoEnvironment::SetScene()  {
 
  void DemoEnvironment::Update(double t)  {
 	DemoBase::Update(t);
-
-
 }

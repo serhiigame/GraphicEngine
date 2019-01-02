@@ -51,6 +51,12 @@ engine::graphic::RawMeshData DemoUtils::CreatePlane(const float width, const flo
 		,{ 0.f, 0.f, -1.0f }
 	};
 
+	meshData.Uv = {
+		{ 0.f, 0.f }
+		,{ 0.f, 1.f }
+		,{ 1.f, 1.f }
+		,{ 1.f, 0.f }
+	};
 
 	meshData.Indexes = { 0,1,2, 3,2,0 };
 	return meshData;
