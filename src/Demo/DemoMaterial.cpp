@@ -13,8 +13,8 @@ void DemoMaterial::RegisterMaterials()
 	materialInfo.fragShaderPath = "../res/shaders/Diffuse.pxl";
 
 	engine::graphic::MaterialInputDesc imputDesk;
-	imputDesk.Binding = 9;
-	imputDesk.Type = engine::graphic::EMaterialInputType::VEC4F;
+	imputDesk.Binding = 11;
+	imputDesk.Type = engine::graphic::EMaterialInputType::TEXTURE;
 	imputDesk.Name = "param";
 
 	materialInfo.Descriptions.push_back(imputDesk);
@@ -36,11 +36,16 @@ void DemoMaterial::SetScene()  {
 	//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
 	engine::graphic::RawMeshData rawMeshData = DemoUtils::CreatePlane(0.5, 0.5);
 
-	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("D:/Projects/GraphicEngine/res/Images/skybox.png");
+	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("../res/images/skybox.png");
 
 	engine::graphic::Material * material = gApi.CreateMaterial(g_diffuseMaterial);
 
-	gApi.SetMaterialParameterF4(material, "param", engine::Vec4f({ 0.f, 1.f, 0.f, 1.f }));
+	engine::graphic::Texture2d * texture = demoUtils.LoadTexture2d("../res/images/uv.png");
+
+
+	//gApi.SetMaterialParameterF4(material, "param", engine::Vec4f({ 0.f, 1.f, 0.f, 1.f }));
+
+	gApi.SetMaterialParameterTex2d(material, "param", texture);
 
 	mesh = gApi.CreateMesh(rawMeshData);
 

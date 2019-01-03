@@ -18,19 +18,30 @@ namespace engine
 		}
 
 
-		ITexture2D * Texture2dGL::CreateTexture(const size_t width, const size_t height, const ETextureFormat format, const EDataType dataType)
+		ITexture2D * Texture2dGL::CreateTexture(const size_t width, const size_t height, const ETextureFormat internalFormat, const EDataType dataType)
 		{
 			Texture2dGL * texture = new Texture2dGL;
 
-			texture->m_format = format;
+			if (internalFormat == ETextureFormat::RGBAf)
+			{
+				texture->m_format = ETextureFormat::RGBA;
+			}
+			else if (internalFormat == ETextureFormat::RGBf)
+			{
+				texture->m_format = ETextureFormat::RGB;
+			}
+			else
+			{
+				texture->m_format = internalFormat;
+			}
+
 			texture->m_dataType = dataType;
 
 			glGenTextures(1, &texture->m_textureId);
 
-
 			glBindTexture(GL_TEXTURE_2D, texture->m_textureId);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, AdapterGlFormat(texture->m_format), (GLsizei)width, (GLsizei)height, 0, GL_RGB, LlrOpenGL::AdapterGlDataType(texture->m_dataType), nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, AdapterGlFormat(internalFormat), (GLsizei)width, (GLsizei)height, 0, AdapterGlFormat(texture->m_format), LlrOpenGL::AdapterGlDataType(texture->m_dataType), nullptr);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

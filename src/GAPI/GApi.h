@@ -91,6 +91,9 @@ namespace engine
 			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param);
 
 			GAPI_EXPORT
+			void SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture);
+
+			GAPI_EXPORT
 			void DeleteMaterial(Material * material);
 
 			GAPI_EXPORT

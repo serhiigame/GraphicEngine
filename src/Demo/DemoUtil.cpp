@@ -2,6 +2,7 @@
 
 #include "..\GU\ImageIO.h"
 #include "..\GAPI\GApi.h"
+#include "..\GAPI\Texture2d.h"
 #include "..\GAPI\TextureCubeMap.h"
 
 #define _USE_MATH_DEFINES
@@ -158,6 +159,24 @@ engine::graphic::RawMeshData DemoUtils::CreateSphere(const float radius)
 
 	return meshData;
 
+}
+
+engine::graphic::Texture2d * DemoUtils::LoadTexture2d(const std::string & path)
+{
+	int w, h;
+	const int k_defaultBpp = 4;
+	const float * pData = engine::utility::ImageIo::Get().Load(path, w, h);
+
+	if (!pData)
+	{
+		return nullptr;
+	}
+	
+	engine::graphic::Texture2d * texture2d = m_gapi->CreateTexture2d(w, h);
+
+	texture2d->WriteImage(0, 0, w, h, pData);
+	
+	return texture2d;
 }
 
 engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & path)

@@ -1,4 +1,5 @@
 #include "ShaderInputs.h"
+#include "Texture2d.h"
 
 namespace engine
 {

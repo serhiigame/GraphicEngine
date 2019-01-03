@@ -300,31 +300,36 @@ namespace engine
 
 			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
 			{
-				const std::vector<MaterialInputDesc> & descriptions = m_materials.at(material->m_materialId).MaterialInputDescs;
+				IShaderInput * shaderInput = FindShaderInput(material, paramName);
 
-				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const MaterialInputDesc & decs)->bool {return decs.Name == paramName; });
-
-				if (findedMatDesc == descriptions.end())
+				if (!shaderInput)
 				{
 					return;
 				}
-
-				auto materialInputs = material->m_materialInputs;
-				auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-				if (findedShaderInput == materialInputs.end())
-				{
-					return;
-				}
-
-				IShaderInput * shaderInput = findedShaderInput->second;
 
 				if (shaderInput->GetShaderInputType() != EShaderInputType::CONSTANT)
 				{
 					return;
 				}
 
-				SetShaderInput(shaderInput, param);
+				SetShaderInputConstant(shaderInput, param);
+			}
+
+			void SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture)
+			{
+				IShaderInput * shaderInput = FindShaderInput(material, paramName);
+
+				if (!shaderInput)
+				{
+					return;
+				}
+
+				if (shaderInput->GetShaderInputType() != EShaderInputType::TEXTURE_2D)
+				{
+					return;
+				}
+
+				SetShaderInputTexture2d(shaderInput, texture);
 			}
 
 			void DeleteMaterial(Material * material) {
@@ -466,6 +471,10 @@ namespace engine
 									if (shaderInput->GetShaderInputType() == EShaderInputType::CONSTANT)
 									{
 										shader->AttachConstant(((ShaderInputConstant *)shaderInput)->m_constant, binding);
+									}
+									else if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+									{
+										shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
 									}
 								}
 
@@ -636,7 +645,7 @@ namespace engine
 			}
 
 			template<class T>
-			IShaderInput * CreateShaderInput()
+			IShaderInput * CreateShaderInputConstant()
 			{
 				IConstant * constant = m_llr->CreateConatant(sizeof(T));
 				ShaderInputConstant * shaderInput = new ShaderInputConstant;
@@ -646,13 +655,24 @@ namespace engine
 				return shaderInput;
 			}
 
+			IShaderInput * CreateShaderInputTexture2d()
+			{
+				// TODO create via factory
+				ShaderInputTexture2d * shaderInput = new ShaderInputTexture2d;
+				return shaderInput;
+			}
+
 			IShaderInput * CreateShaderInput(const EMaterialInputType type)
 			{
 				
 				switch (type)
 				{
 				case EMaterialInputType::VEC4F:
-					return CreateShaderInput<Vec4f>();
+					return CreateShaderInputConstant<Vec4f>();
+
+				case EMaterialInputType::TEXTURE:
+					return CreateShaderInputTexture2d();
+
 				default:
 					break;
 				}
@@ -660,8 +680,30 @@ namespace engine
 				return nullptr;
 			}
 
+			IShaderInput * FindShaderInput(Material * material, const std::string & paramName)
+			{
+				const std::vector<MaterialInputDesc> & descriptions = m_materials.at(material->m_materialId).MaterialInputDescs;
+
+				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const MaterialInputDesc & decs)->bool {return decs.Name == paramName; });
+
+				if (findedMatDesc == descriptions.end())
+				{
+					return nullptr;
+				}
+
+				auto materialInputs = material->m_materialInputs;
+				auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
+
+				if (findedShaderInput == materialInputs.end())
+				{
+					return nullptr;
+				}
+
+				return findedShaderInput->second;
+			}
+
 			template<class T>
-			void SetShaderInput(IShaderInput * shaderInput, const T & data)
+			void SetShaderInputConstant(IShaderInput * shaderInput, const T & data)
 			{
 				if (!shaderInput)
 				{
@@ -675,6 +717,22 @@ namespace engine
 
 				ShaderInputConstant * constant = ((ShaderInputConstant *)shaderInput);
 				constant->m_constant->Write(0, sizeof(T), &data);
+			}
+
+			void SetShaderInputTexture2d(IShaderInput * shaderInput, Texture2d * texture)
+			{
+				if (!shaderInput)
+				{
+					return;
+				}
+
+				if (shaderInput->GetShaderInputType() != EShaderInputType::TEXTURE_2D)
+				{
+					return;
+				}
+
+				ShaderInputTexture2d * texture2d = ((ShaderInputTexture2d *)shaderInput);
+				texture2d->m_texture = texture;
 			}
 
 			void DeleteShaderInput(IShaderInput * shaderInput)
@@ -785,6 +843,11 @@ namespace engine
 		void GApi::SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
 		{
 			m_impl->SetMaterialParameterF4(material, paramName, param);
+		}
+
+		void GApi::SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture)
+		{
+			m_impl->SetMaterialParameterTex2d(material, paramName, texture);
 		}
 
 		void GApi::DeleteMaterial(Material * material) {

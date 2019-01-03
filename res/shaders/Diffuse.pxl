@@ -1,8 +1,10 @@
 #version 440 core
-layout(binding = 0) uniform sampler2D difColor;
 layout(binding = 1) uniform sampler2D pos;
 layout(binding = 2) uniform sampler2D norm;
 layout(binding = 3) uniform sampler2D uv;
+
+// material input
+layout(binding = 11) uniform sampler2D difColor;
 
 in vec2 v_iuv;
 layout (location = 0) out vec4 color;
@@ -20,9 +22,9 @@ layout (std140, binding = 1) uniform PointLight {
 	vec4 positionAndIntensity;
 } u_PointLight;
 
-layout (std140, binding = 9) uniform MaterialParam {
-	vec4 param;
-} u_MaterialParam;
+//layout (std140, binding = 9) uniform MaterialParam {
+//	vec4 param;
+//} u_MaterialParam;
 
 void main() { 
 	vec3 position = texture(pos, v_iuv).xyz;
@@ -38,7 +40,8 @@ void main() {
 	vec3 L = pointLightPos - worldPosition.xyz;
 	vec3 N =  texture(norm, v_iuv).xyz;
 	
-	color = texture(uv, v_iuv);
+	color = texture(difColor, texture(uv, v_iuv).xy) *0.9 +  texture(uv, v_iuv) * 0.1;
+	//color = texture(pos, v_iuv);
 
 	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(N), normalize(L)), 0.01,1.);
 

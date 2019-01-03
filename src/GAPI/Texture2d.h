@@ -1,5 +1,7 @@
 #pragma once
 
+#include "api.h"
+
 #include "IResource.h"
 
 namespace engine
@@ -14,6 +16,9 @@ namespace engine
 			friend class GApiImpl;
 		public:
 			~Texture2d();
+
+			GAPI_EXPORT
+			void WriteImage(int xOffset, int yOffset, int w, int h, const void * data);
 
 		protected:
 			ITexture2D * m_texture = nullptr;

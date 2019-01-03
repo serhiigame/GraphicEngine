@@ -15,10 +15,11 @@ namespace engine
 			NONE = -1
 			, CONSTANT = 0
 			, TEXTURE_2D
-			, TEXTURECUBEMAP
+			, TEXTURE_CUBEMAP
 		};
 		
 		class IConstant;
+		class Texture2d;
 		
 		class IShaderInput : public IResource
 		{
@@ -42,6 +43,20 @@ namespace engine
 			ShaderInputConstant() : IShaderInput(EShaderInputType::CONSTANT) {}
 		private:
 			IConstant * m_constant;
+		};
+
+		class ShaderInputTexture2d : public IShaderInput
+		{
+			friend class GApi;
+			friend class GApiImpl;
+			friend class Shader;
+		public:
+			ShaderInputTexture2d() : IShaderInput(EShaderInputType::TEXTURE_2D) {}
+			const Texture2d * GetTexture() const {
+				return m_texture;
+			}
+		private:
+			Texture2d * m_texture;
 		};
 	}
 }
