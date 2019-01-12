@@ -8,9 +8,9 @@ layout (location = 0) out vec4 color;
 void main() { 
 	vec4 rgb = texture(tex, v_uv);
 	float bw = (rgb.r + rgb.g + rgb.b) / 3;
-	//color = vec4(bw, bw, bw, 1.);
+	color = vec4(bw, bw, bw, 1.);
 	
 	float gamma = 2.2;
 	//color = vec4( rgb.xyz, 1.);
-	color = vec4( pow(rgb.xyz, vec3(1.0/gamma)), 1.);
+	//color = vec4( pow(rgb.xyz, vec3(1.0/gamma)), 1.);
 }

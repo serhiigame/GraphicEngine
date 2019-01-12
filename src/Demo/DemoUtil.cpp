@@ -18,12 +18,14 @@ struct CubemapData {
 
 
 
-static void computeSphereVertex(float radius, float theta, float phi, engine::Vec3f & out_position, engine::Vec3f & out_normal)
+static void computeSphereVertex(float radius, float theta, float phi, engine::Vec3f & out_position, engine::Vec3f & out_normal, engine::Vec2f & out_uv)
 {
 	out_position = engine::Vec3f({ radius * sin(theta) * cos(phi) , radius * sin(theta) * sin(phi) , radius * cos(theta) });
 
 	float len = sqrtf(out_position[0] * out_position[0] + out_position[1] * out_position[1] + out_position[2] * out_position[2]);
 	out_normal = engine::Vec3f({ out_position[0] / len, out_position[1] / len, out_position[2] / len });
+
+	out_uv = engine::Vec2f({ theta / ((float)M_PI * 2), phi / ((float)M_PI * 2) });
 }
 
 
@@ -125,24 +127,27 @@ engine::graphic::RawMeshData DemoUtils::CreateSphere(const float radius)
 		{
 			engine::Vec3f position;
 			engine::Vec3f normal;
+			engine::Vec2f uv;
 
-
-			computeSphereVertex(radius, thetaRange[i], phiRange[j], position, normal);
+			computeSphereVertex(radius, thetaRange[i], phiRange[j], position, normal, uv);
 			meshData.Positions.push_back(position);
 			meshData.Normals.push_back(normal);
+			meshData.Uv.push_back(uv);
 
-			computeSphereVertex(radius, thetaRange[i + 1], phiRange[j], position, normal);
+			computeSphereVertex(radius, thetaRange[i + 1], phiRange[j], position, normal, uv);
 			meshData.Positions.push_back(position);
 			meshData.Normals.push_back(normal);
+			meshData.Uv.push_back(uv);
 
-			computeSphereVertex(radius, thetaRange[i + 1], phiRange[j + 1], position, normal);
+			computeSphereVertex(radius, thetaRange[i + 1], phiRange[j + 1], position, normal, uv);
 			meshData.Positions.push_back(position);
 			meshData.Normals.push_back(normal);
+			meshData.Uv.push_back(uv);
 
-			computeSphereVertex(radius, thetaRange[i], phiRange[j + 1], position, normal);
+			computeSphereVertex(radius, thetaRange[i], phiRange[j + 1], position, normal, uv);
 			meshData.Positions.push_back(position);
 			meshData.Normals.push_back(normal);
-
+			meshData.Uv.push_back(uv);
 
 			meshData.Indexes.push_back(indexCounter + 0);
 			meshData.Indexes.push_back(indexCounter + 1);

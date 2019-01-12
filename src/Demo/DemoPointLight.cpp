@@ -2,6 +2,7 @@
 
 void DemoPointLight::SetScene() {
 
+	DemoUtils demoUtils(&gApi);
 	DemoBase::SetScene();
 	SetCameraDistance(0.9f);
 
@@ -14,8 +15,8 @@ void DemoPointLight::SetScene() {
 
 	//gte::Matrix4x4<float> camereViewMatrix = cameraTransformTranslate.GetHMatrix() * cameraTransformRotete.GetHMatrix();
 
-	engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
-	//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreatePlane(0.4f, 0.4f);
+	//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
+	engine::graphic::RawMeshData rawMeshData = DemoUtils::CreatePlane(0.4f, 0.4f);
 
 	/*std::vector<engine::graphic::RawMeshData> rawMeshDatas;
 	if (!engine::utility::SceneIo::Get().LoadMesh("D:/Projects/1/FireRender/Resources/Obj/cube.obj", rawMeshDatas))
@@ -28,7 +29,15 @@ void DemoPointLight::SetScene() {
 
 	mesh = gApi.CreateMesh(rawMeshData);
 
+	engine::graphic::Material * material = gApi.CreateMaterial(m_diffuseMaterial);
+
+	engine::graphic::Texture2d * texture = demoUtils.LoadTexture2d("../res/images/uv.png");
+
+	gApi.SetMaterialParameterTex2d(material, "param", texture);
+
 	light = gApi.CreatePointLight();
+
+	gApi.SetMeshMaterial(mesh, material);
 
 	gApi.SetPointLightPosition(light, engine::Vec3f({ 2.0f, 2.f, 5.0f }));
 

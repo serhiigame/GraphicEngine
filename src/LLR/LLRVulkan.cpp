@@ -480,6 +480,11 @@ namespace engine
 			return nullptr;
 		}
 
+		IRenderbuffer * LlrVulkan::CreateRenderbuffer(const size_t width, const size_t heigth)
+		{
+			return nullptr;
+		}
+
 		/*EApiRenderPassStatus ApiVulkan::RenderPass(const IShader * shader, IFramebuffer * outputBuffer)
 		{
 			

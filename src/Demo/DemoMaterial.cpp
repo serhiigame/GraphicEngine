@@ -2,26 +2,6 @@
 
 #include "../GAPI/Material.h"
 
-engine::graphic::MaterialHandler g_diffuseMaterial;
-
-
-void DemoMaterial::RegisterMaterials()
-{
-	
-	engine::graphic::MaterialInfo materialInfo;
-	materialInfo.vertShaderPath = "../res/shaders/Diffuse.vrt";
-	materialInfo.fragShaderPath = "../res/shaders/Diffuse.pxl";
-
-	engine::graphic::MaterialInputDesc imputDesk;
-	imputDesk.Binding = 11;
-	imputDesk.Type = engine::graphic::EMaterialInputType::TEXTURE;
-	imputDesk.Name = "param";
-
-	materialInfo.Descriptions.push_back(imputDesk);
-
-	g_diffuseMaterial = gApi.RegisterMaterial(materialInfo);
-}
-
 
 void DemoMaterial::SetScene()  {
 
@@ -29,27 +9,37 @@ void DemoMaterial::SetScene()  {
 
 	DemoUtils demoUtils(&gApi);
 
+	engine::Transform planeTransform;
+	engine::Transform sphereTransform;
+
+	planeTransform.SetRotation(gte::EulerAngles<float>(0, 1, 2, 0.f, M_PI_2, M_PI_2));
+	sphereTransform.SetTranslation(engine::Vec4f({ 0.f, 0.2f, 0.f, 1.f }));
+
 	RegisterMaterials();
 
 	SetCameraDistance(0.9f);
 
-	//engine::graphic::RawMeshData rawMeshData = DemoUtils::CreateSphere(0.2);
-	engine::graphic::RawMeshData rawMeshData = DemoUtils::CreatePlane(0.5, 0.5);
+	engine::graphic::RawMeshData rawMeshSphere = DemoUtils::CreateSphere(0.2);
+	engine::graphic::RawMeshData rawMeshPlane = DemoUtils::CreatePlane(5.0, 5.0);
 
 	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("../res/images/skybox.png");
 
-	engine::graphic::Material * material = gApi.CreateMaterial(g_diffuseMaterial);
+	engine::graphic::Material * material1 = gApi.CreateMaterial(m_diffuseMaterial);
+	engine::graphic::Texture2d * texture1 = demoUtils.LoadTexture2d("../res/images/uv.png");
+	gApi.SetMaterialParameterTex2d(material1, "param", texture1);
 
-	engine::graphic::Texture2d * texture = demoUtils.LoadTexture2d("../res/images/uv.png");
+	engine::graphic::Material * material2 = gApi.CreateMaterial(m_diffuseMaterial);
+	engine::graphic::Texture2d * texture2 = demoUtils.LoadTexture2d("../res/images/grass.png");
+	gApi.SetMaterialParameterTex2d(material2, "param", texture2);
 
+	mesh1 = gApi.CreateMesh(rawMeshSphere);
+	mesh2 = gApi.CreateMesh(rawMeshPlane);
 
-	//gApi.SetMaterialParameterF4(material, "param", engine::Vec4f({ 0.f, 1.f, 0.f, 1.f }));
+	gApi.SetMeshMaterial(mesh1, material1);
+	gApi.SetMeshMaterial(mesh2, material2);
 
-	gApi.SetMaterialParameterTex2d(material, "param", texture);
-
-	mesh = gApi.CreateMesh(rawMeshData);
-
-	gApi.SetMeshMaterial(mesh, material);
+	gApi.SetMeshTransform(mesh1, gte::Transpose(sphereTransform.GetHMatrix()));
+	gApi.SetMeshTransform(mesh2, gte::Transpose(planeTransform.GetMatrix()));
 
 	light = gApi.CreatePointLight();
 
@@ -59,7 +49,8 @@ void DemoMaterial::SetScene()  {
 
 	gApi.SetSceneSkybox(m_scene, skybox);
 
-	gApi.AddSceneMesh(m_scene, mesh);
+	gApi.AddSceneMesh(m_scene, mesh1);
+	gApi.AddSceneMesh(m_scene, mesh2);
 
 	gApi.AddScenePointLight(m_scene, light);
 }

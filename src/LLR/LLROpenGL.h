@@ -28,6 +28,8 @@ namespace engine
 
 			virtual IFramebuffer * CreateFramebuffer(const size_t width, const size_t heigth) override;
 
+			virtual IRenderbuffer * CreateRenderbuffer(const size_t width, const size_t heigth) override;
+
 			virtual IRenderPass * CreateRenderPass() override;
 		};
 	}

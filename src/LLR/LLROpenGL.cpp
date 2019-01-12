@@ -5,6 +5,7 @@
 #include "Texture2dGL.h"
 #include "TextureCubeMapGL.h"
 #include "FramebufferGL.h"
+#include "RenderbufferGL.h"
 #include "RenderPassGl.h"
 
 #include <GLEW/glew.h>
@@ -159,6 +160,11 @@ namespace engine
 		IFramebuffer * LlrOpenGL::CreateFramebuffer(const size_t width, const size_t heigth)
 		{
 			return FramebufferGL::CreateFramebuffer(width, heigth);
+		}
+
+		IRenderbuffer * LlrOpenGL::CreateRenderbuffer(const size_t width, const size_t heigth)
+		{
+			return RenderbufferGL::CreateRenderbuffer(width, heigth);
 		}
 
 		IRenderPass * LlrOpenGL::CreateRenderPass()

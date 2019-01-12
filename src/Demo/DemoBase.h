@@ -1,5 +1,7 @@
 #pragma once
 
+#include "DemoUtil.h"
+
 #include <set>
 
 #include <GLEW/glew.h>
@@ -8,6 +10,7 @@
 
 #include "../GAPI/GApi.h"
 #include "../GAPI/Scene.h"
+#include "../GAPI/Material.h"
 
 #include "Math.h"
 
@@ -197,7 +200,10 @@ protected:
 
 		gApi.SetSceneCamera(m_scene, m_camera);
 
+		RegisterMaterials();
 	}
+
+	void RegisterMaterials();
 
 	virtual void Update(double t) {
 		UpdateCamera(t);
@@ -208,6 +214,8 @@ protected:
 	engine::graphic::GApi gApi;
 
 	engine::graphic::Scene * m_scene;
+
+	engine::graphic::MaterialHandler m_diffuseMaterial;
 
 	void SetCameraDistance(const float & distance)
 	{

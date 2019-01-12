@@ -1,6 +1,5 @@
 #pragma once
 #include "DemoBase.h"
-#include "DemoUtil.h"
 
 class DemoMaterial : public DemoBase
 {
@@ -11,8 +10,7 @@ protected:
 
 private:
 
-	void RegisterMaterials();
-
-	engine::graphic::Mesh * mesh = nullptr;
+	engine::graphic::Mesh * mesh1 = nullptr;
+	engine::graphic::Mesh * mesh2 = nullptr;
 	engine::graphic::PointLight * light = nullptr;
 };

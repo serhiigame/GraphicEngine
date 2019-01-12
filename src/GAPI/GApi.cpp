@@ -49,19 +49,18 @@ namespace engine
 			ConstantBindings ConstantInputs;
 		};
 
+		struct RanderStageShaderOutputs
+		{
+			Texture2dBindings Texture2dInputs;
+		};
+
 		struct RenderStage
 		{
 			IRenderPass * RenderPass;
 			IShader * Shader;
 
-			//RanderStageShaderInputs GloabalShaderInputs;
 			std::vector<RanderStageShaderInputs> ShaderInputs;
-
-			
-			//Texture2dBindings Texture2dInputs;
-			//TextureCubeMapBindings TextureCubeMapInputs;
-			//ConstantBindings ConstantInputs;
-			// BufferInputs
+			RanderStageShaderOutputs ShaderOutputs;
 
 			IFramebuffer * OutputFramebuffer;
 
@@ -108,17 +107,17 @@ namespace engine
 					delete resource;
 				}
 
-				if (m_gBufferShader)
-				{
-					delete m_gBufferShader;
-					m_gBufferShader = nullptr;
-				}
+				//if (m_gBufferShader)
+				//{
+				//	delete m_gBufferShader;
+				//	m_gBufferShader = nullptr;
+				//}
 				
-				if (m_gBufferRenderPass)
-				{
-					delete m_gBufferRenderPass;
-					m_gBufferRenderPass = nullptr;
-				}
+				//if (m_gBufferRenderPass)
+				//{
+				//	delete m_gBufferRenderPass;
+				//	m_gBufferRenderPass = nullptr;
+				//}
 
 				if (m_gBufferFb)
 				{
@@ -132,7 +131,7 @@ namespace engine
 					m_acumuFb = nullptr;
 				}
 
-				if (m_diffuseTexture)
+				/*if (m_diffuseTexture)
 				{
 					delete m_diffuseTexture;
 					m_diffuseTexture = nullptr;
@@ -155,7 +154,7 @@ namespace engine
 				{
 					delete m_uvTexture;
 					m_uvTexture = nullptr;
-				}
+				}*/
 
 
 				if (m_rectIndexBuffer)
@@ -175,16 +174,17 @@ namespace engine
 			}
 
 			void BingMesh(Mesh * mesh) {
-				m_gBufferShader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
-				m_gBufferShader->AttachAttribute(mesh->m_norm, globalBufferAttchment::Normal, 0, 3, EDataType::FLOAT);
-				m_gBufferShader->AttachAttribute(mesh->m_uv, globalBufferAttchment::Uv, 0, 2, EDataType::FLOAT);
-				//m_gBufferShader->AttachConstant(mesh->m_transform, 0);
+				IShader * gShader = m_gBuffRenderStage.Shader;
+
+				gShader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
+				gShader->AttachAttribute(mesh->m_norm, globalBufferAttchment::Normal, 0, 3, EDataType::FLOAT);
+				gShader->AttachAttribute(mesh->m_uv, globalBufferAttchment::Uv, 0, 2, EDataType::FLOAT);
 
 				IBuffer * idx = mesh->m_idx;
 				size_t count = idx->GetSize() / sizeof(unsigned int);
-				m_gBufferShader->AttachAttribute(idx, 0, 0, count, EDataType::UNSIGNED_INT);
+				gShader->AttachAttribute(idx, 0, 0, count, EDataType::UNSIGNED_INT);
 
-				m_gBufferShader->AttachConstant(mesh->m_transform, globalConstAttchment::Transformation);
+				gShader->AttachConstant(mesh->m_transform, globalConstAttchment::Transformation);
 			}
 
 			Scene * CreareScene()
@@ -230,11 +230,28 @@ namespace engine
 				delete mesh;
 			}
 
-			MaterialHandler RegisterMaterial(MaterialInfo & materialInfo)
+			void CreateGbuffer(ShaderInfo & shaderInfo)
+			{
+
+				Shader * shader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
+
+				RanderStageShaderInputs shaderInputs;
+				RanderStageShaderOutputs shaderOutputs;
+
+				for (auto output : shaderInfo.Outputs)
+				{
+					ITexture2D * texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+					shaderOutputs.Texture2dInputs.emplace(output.Binding, texture);
+				}
+
+				m_gBuffRenderStage = CreateGbufferRenderStege(shader->m_shader, shaderInputs, shaderOutputs, m_gBufferFb);
+			}
+
+			MaterialHandler RegisterMaterial(ShaderInfo & ShaderInfo)
 			{
 				int materialId = m_materialIdCounter++;
 
-				Shader * shader = CreateShader(materialInfo.vertShaderPath, materialInfo.fragShaderPath);
+				Shader * shader = CreateShader(ShaderInfo.vertShaderPath, ShaderInfo.fragShaderPath);
 
 				if (!shader)
 				{
@@ -244,15 +261,13 @@ namespace engine
 				MaterialObject materialObject;
 
 				m_materials[materialId].Shader = shader;
-				m_materials[materialId].MaterialInputDescs = materialInfo.Descriptions;
+				m_materials[materialId].ShaderInputDescs = ShaderInfo.Inputs;
 
 				materialObject.SetMaterilId(materialId);
 
 				RanderStageShaderInputs globalShaderInputs;
-				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Color] = m_diffuseTexture;
-				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Position] = m_positionTexture;
-				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Normal] = m_normalTexture;
-				globalShaderInputs.Texture2dInputs[globalTextureAttachment::Uv] = m_uvTexture;
+
+				globalShaderInputs.Texture2dInputs = m_gBuffRenderStage.ShaderOutputs.Texture2dInputs;
 
 				RenderStage renderStage = CreateLightRenderStege(shader->m_shader, globalShaderInputs, m_acumuFb);
 
@@ -284,7 +299,7 @@ namespace engine
 				Material * material = new Material;
 				material->m_materialId = materialObject.GetMaterilId();
 
-				for (auto inpudDesc : matDesc.MaterialInputDescs)
+				for (auto inpudDesc : matDesc.ShaderInputDescs)
 				{
 					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
 					{
@@ -432,12 +447,17 @@ namespace engine
 
 			void RenderGeometry(const std::vector<Mesh *> meshes, const Camera * camera)
 			{
-				m_gBufferShader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
+				IShader * gShader = m_gBuffRenderStage.Shader;
+				gShader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
 				
 				for (Mesh * mesh : meshes)
 				{
 					BingMesh(mesh);
-					RenderGBuffer();
+					
+					IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
+					IShader * shader = m_gBuffRenderStage.Shader;
+					IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
+					renderPass->Execute(shader, framebuffer);
 				}
 			}
 
@@ -502,44 +522,20 @@ namespace engine
 
 			void InitGBufferRenderState()
 			{
-				
-				m_gBufferShader = m_llr->CreateShader("../res/shaders/GBuffer.vrt", "../res/shaders/GBuffer.pxl");
-
 				m_gBufferFb = m_llr->CreateFramebuffer(w, h);
+				m_renderbuffer = m_llr->CreateRenderbuffer(w, h);
 
-				m_diffuseTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
-				m_positionTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
-				m_normalTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
-				m_uvTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
-
-				m_gBufferFb->AttachTextures2d(Texture2dBindings({
-					{ globalTextureAttachment::Color, m_diffuseTexture }
-					,{ globalTextureAttachment::Position, m_positionTexture }
-					,{ globalTextureAttachment::Normal, m_normalTexture }
-					,{ globalTextureAttachment::Uv, m_uvTexture }
-				}));
-
-				m_gBufferRenderPass = m_llr->CreateRenderPass();
+				m_gBufferFb->SetRenderbuffer(m_renderbuffer);
 			}
 
 			void InitLightRenderState() {
-				//IShader * diffuseShader = m_llr->CreateShader("../res/shaders/Lambert.vrt", "../res/shaders/Lambert.pxl");
-
 				m_acumuFb = m_llr->CreateFramebuffer(w, h);
 
 				m_acumTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
 
+				//TODO: use ShaderOutput for m_acumTexture
 				m_acumuFb->AttachTextures2d(Texture2dBindings({ { 0, m_acumTexture } }));
-
-				/*RenderStage renderStage = CreateLightRenderStege(diffuseShader
-					, Texture2dBindings({
-						{ globalTextureAttachment::Color, m_diffuseTexture }
-						,{ globalTextureAttachment::Position, m_positionTexture }
-						,{ globalTextureAttachment::Normal, m_normalTexture } })
-					, TextureCubeMapBindings()
-					, m_acumuFb);
-
-				m_lightRenderStages.push_back(renderStage);*/
+				
 			}
 
 			void InitPostEffectsRenderState() {
@@ -557,9 +553,49 @@ namespace engine
 				m_pEffectRenderStages.push_back(renderStage);
 			}
 
+
+			RenderStage CreateGbufferRenderStege(IShader * shader
+				, const RanderStageShaderInputs & shaderInputs
+				, const RanderStageShaderOutputs & shaderOutputs
+				, IFramebuffer * output)
+			{
+				if (!m_rectIndexBuffer)
+				{
+					const GLuint indexes[]{ 0,1,2, 3,2,0 };
+					m_rectIndexBuffer = m_llr->CreateIndexBuffer(sizeof(indexes));
+					m_rectIndexBuffer->Write(0, sizeof(indexes), indexes);
+				}
+
+				RenderStage renderStage;
+
+				renderStage.Shader = shader;
+				renderStage.OutputFramebuffer = output;
+				renderStage.RenderPass = m_llr->CreateRenderPass();
+
+
+				for (auto texture2dInput : shaderInputs.Texture2dInputs)
+				{
+					const uint32_t textureLocation = texture2dInput.first;
+					const ITexture2D * texture = texture2dInput.second;
+
+					renderStage.Shader->AttachTexture2d(texture, textureLocation);
+				}
+
+				if(!shaderOutputs.Texture2dInputs.empty())
+				{
+					renderStage.ShaderOutputs.Texture2dInputs = shaderOutputs.Texture2dInputs;
+					output->AttachTextures2d(shaderOutputs.Texture2dInputs);
+				}
+
+				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
+				uint32_t rectIndexCount = GetRectIndexCount();
+				EDataType rectIndexType = GetRectIndexType();
+				renderStage.Shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
+
+				return renderStage;
+			}
+
 			RenderStage CreateLightRenderStege(IShader * shader
-				//, const Texture2dBindings & texture2dInputs
-				//, const TextureCubeMapBindings & textureCubeMapInputs
 				, const RanderStageShaderInputs & globalShaderInputs
 				, IFramebuffer * output)
 			{
@@ -573,8 +609,6 @@ namespace engine
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				//renderStage.Texture2dInputs = texture2dInputs;
-				//renderStage.TextureCubeMapInputs = textureCubeMapInputs;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
@@ -595,22 +629,6 @@ namespace engine
 					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
 				}
 
-				/*for (auto texture2dInput : renderStage.Texture2dInputs)
-				{
-					const uint32_t textureLocation = texture2dInput.first;
-					const ITexture2D * texture = texture2dInput.second;
-
-					renderStage.Shader->AttachTexture2d(texture, textureLocation);
-				}
-
-				for (auto textureCubeMapInput : renderStage.TextureCubeMapInputs)
-				{
-					const uint32_t textureLocation = textureCubeMapInput.first;
-					const ITextureCubeMap * texture = textureCubeMapInput.second;
-
-					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
-				}*/
-
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
 				uint32_t rectIndexCount = GetRectIndexCount();
 				EDataType rectIndexType = GetRectIndexType();
@@ -624,8 +642,6 @@ namespace engine
 				RenderStage renderStage;
 
 				renderStage.Shader = shader;
-				//renderStage.Texture2dInputs = inputs;
-				//renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
 				for (auto textureInput : inputs.Texture2dInputs)
@@ -682,9 +698,9 @@ namespace engine
 
 			IShaderInput * FindShaderInput(Material * material, const std::string & paramName)
 			{
-				const std::vector<MaterialInputDesc> & descriptions = m_materials.at(material->m_materialId).MaterialInputDescs;
+				const std::vector<ShaderInputDesc> & descriptions = m_materials.at(material->m_materialId).ShaderInputDescs;
 
-				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const MaterialInputDesc & decs)->bool {return decs.Name == paramName; });
+				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
 
 				if (findedMatDesc == descriptions.end())
 				{
@@ -740,10 +756,6 @@ namespace engine
 				delete shaderInput;
 			}
 
-			void RenderGBuffer() {
-				m_gBufferRenderPass->Execute(m_gBufferShader, m_gBufferFb);
-			}
-
 			IBuffer * GetRectIndexBuffer()
 			{
 				if (!m_rectIndexBuffer)
@@ -768,21 +780,16 @@ namespace engine
 
 			Llr * m_llr;
 
-			IShader * m_gBufferShader = nullptr;
-			IRenderPass * m_gBufferRenderPass = nullptr;
-
 			IFramebuffer * m_gBufferFb = nullptr;
 			IFramebuffer * m_acumuFb = nullptr;
 
-			ITexture2D * m_diffuseTexture = nullptr;
-			ITexture2D * m_positionTexture = nullptr;
-			ITexture2D * m_normalTexture = nullptr;
-			ITexture2D * m_uvTexture = nullptr;
+			IRenderbuffer * m_renderbuffer = nullptr;
 
 			IBuffer * m_rectIndexBuffer = nullptr;
 
 			ITexture2D * m_acumTexture = nullptr;
 
+			RenderStage m_gBuffRenderStage;
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
@@ -830,9 +837,14 @@ namespace engine
 			m_impl->DeleteMesh(mesh);
 		}
 
-		MaterialHandler GApi::RegisterMaterial(MaterialInfo & materialInfo)
+		void GApi::CreateGbuffer(ShaderInfo & ShaderInfo)
 		{
-			return m_impl->RegisterMaterial(materialInfo);
+			m_impl->CreateGbuffer(ShaderInfo);
+		}
+
+		MaterialHandler GApi::RegisterMaterial(ShaderInfo & ShaderInfo)
+		{
+			return m_impl->RegisterMaterial(ShaderInfo);
 		}
 
 		Material * GApi::CreateMaterial(MaterialHandler & handler)

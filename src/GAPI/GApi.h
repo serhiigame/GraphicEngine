@@ -19,7 +19,7 @@ namespace engine
 		class Mesh;
 
 		class Material;
-		class MaterialInfo;
+		class ShaderInfo;
 		class MaterialHandler;
 
 		class Camera;
@@ -82,7 +82,10 @@ namespace engine
 			void DeleteMesh(Mesh * mesh);
 
 			GAPI_EXPORT
-			MaterialHandler RegisterMaterial(MaterialInfo & materialInfo);
+			void CreateGbuffer(ShaderInfo & ShaderInfo);
+
+			GAPI_EXPORT
+			MaterialHandler RegisterMaterial(ShaderInfo & ShaderInfo);
 
 			GAPI_EXPORT
 			Material * CreateMaterial(MaterialHandler & handler);

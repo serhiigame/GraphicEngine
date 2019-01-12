@@ -2,7 +2,7 @@
 
 void main(void)
 {
-	//DemoBase  * demo = new PointLightAnim();
+	//DemoBase  * demo = new DemoPointLight();
 	//DemoBase  * demo = new DemoEnvironment();
 	DemoBase  * demo = new DemoMaterial();
 

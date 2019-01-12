@@ -27,26 +27,36 @@ namespace engine
 			//, COLOR
 		};
 
-		struct MaterialInputDesc
+		struct ShaderInputDesc
 		{
 			std::string Name;
 			EMaterialInputType Type;
 			int Binding;
 		};
+
+		struct ShaderOutputDesc
+		{
+			ShaderOutputDesc() : Type(EMaterialInputType::TEXTURE) {}
+	
+			std::string Name;
+			const EMaterialInputType Type;
+			int Binding;
+		};
 	
 
-		struct MaterialInfo
+		struct ShaderInfo
 		{
 			std::string vertShaderPath;
 			std::string fragShaderPath;
 
-			std::vector<MaterialInputDesc> Descriptions;
+			std::vector<ShaderInputDesc> Inputs;
+			std::vector<ShaderOutputDesc> Outputs;
 		};
 
 		struct MaterialDescription
 		{
 			Shader * Shader;
-			std::vector<MaterialInputDesc> MaterialInputDescs;
+			std::vector<ShaderInputDesc> ShaderInputDescs;
 		};
 
 		class MaterialHandler

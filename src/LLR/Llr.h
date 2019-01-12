@@ -11,6 +11,7 @@
 #include "ITexture2D.h"
 #include "ITextureCubeMap.h"
 #include "IFramebuffer.h"
+#include "IRenderbuffer.h"
 #include "IRenderPass.h"
 
 namespace engine
@@ -53,6 +54,9 @@ namespace engine
 
 			__declspec(dllexport)
 			virtual IFramebuffer * CreateFramebuffer(const size_t width, const size_t heigth) = 0;
+
+			__declspec(dllexport)
+			virtual IRenderbuffer * CreateRenderbuffer(const size_t width, const size_t heigth) = 0;
 
 			__declspec(dllexport)
 			virtual IRenderPass * CreateRenderPass() = 0;
