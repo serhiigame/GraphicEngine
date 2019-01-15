@@ -1,4 +1,5 @@
 #version 440 core
+layout(binding = 0) uniform sampler2D albedo;
 layout(binding = 1) uniform sampler2D pos;
 layout(binding = 2) uniform sampler2D norm;
 layout(binding = 3) uniform sampler2D uv;
@@ -33,14 +34,20 @@ void main() {
 	//vec3 L = pointLightPos - position;
 
 
-	vec3 pointLightPos = (   vec4(vec3(0.,0.0, -0.02), 1.)).xyz;   ;
+	vec3 pointLightPos = (   vec4(vec3(0.,2.0, -10.00), 1.)).xyz;   ;
 	vec4 worldPosition =   inverse( u_Camara.projection * u_Camara.view) * vec4(texture(pos, v_iuv).xyz, 1.);
 	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_iuv).xyz, 1.);
 	//worldPosition /= worldPosition.w;
 	vec3 L = pointLightPos - worldPosition.xyz;
 	vec3 N =  texture(norm, v_iuv).xyz;
 	
-	color = texture(difColor, texture(uv, v_iuv).xy) *0.9 +  texture(uv, v_iuv) * 0.1;
+	//color = texture(difColor, texture(uv, v_iuv).xy) *0.9 +  texture(uv, v_iuv) * 0.1;
+
+
+	//color = texture(albedo, texture(uv, v_iuv).xy) *0.9 +  texture(uv, v_iuv) * 0.1;
+
+	color = texture(albedo, v_iuv);
+
 	//color = texture(pos, v_iuv);
 
 	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(N), normalize(L)), 0.01,1.);
@@ -60,6 +67,9 @@ void main() {
 
 
 
+	color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 
-	//color = u_MaterialParam.param * length(texture(difColor, v_iuv)) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+
+
+	//color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 }

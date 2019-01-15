@@ -18,9 +18,9 @@ namespace engine
 
 		class Mesh;
 
-		class Material;
-		class ShaderInfo;
+		class ShaderDesc;
 		class MaterialHandler;
+		class MaterialInstance;
 
 		class Camera;
 
@@ -82,22 +82,19 @@ namespace engine
 			void DeleteMesh(Mesh * mesh);
 
 			GAPI_EXPORT
-			void CreateGbuffer(ShaderInfo & ShaderInfo);
+			bool CreateGbuffer(ShaderDesc & shaderDesc);
 
 			GAPI_EXPORT
-			MaterialHandler RegisterMaterial(ShaderInfo & ShaderInfo);
+			MaterialHandler CreateMaterial(ShaderDesc & shaderDesc);
 
 			GAPI_EXPORT
-			Material * CreateMaterial(MaterialHandler & handler);
+			MaterialInstance * CreateMaterialInstance(MaterialHandler & handler);
 
 			GAPI_EXPORT
-			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param);
+			void SetMaterialParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param);
 
 			GAPI_EXPORT
-			void SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture);
-
-			GAPI_EXPORT
-			void DeleteMaterial(Material * material);
+			void SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture);
 
 			GAPI_EXPORT
 			void SetCameraView(Camera * camera, const Mat4f & view);
@@ -109,7 +106,7 @@ namespace engine
 			void SetMeshTransform(Mesh * mesh, const Mat4f & transform);
 
 			GAPI_EXPORT
-			void SetMeshMaterial(Mesh * mesh, Material * material);
+			void SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * material);
 
 			GAPI_EXPORT
 			void SetPointLightPosition(PointLight * light, const Vec3f & position);

@@ -29,7 +29,7 @@ void DemoPointLight::SetScene() {
 
 	mesh = gApi.CreateMesh(rawMeshData);
 
-	engine::graphic::Material * material = gApi.CreateMaterial(m_diffuseMaterial);
+	engine::graphic::MaterialInstance * material = gApi.CreateMaterialInstance(m_diffuseMaterial);
 
 	engine::graphic::Texture2d * texture = demoUtils.LoadTexture2d("../res/images/uv.png");
 
@@ -37,7 +37,7 @@ void DemoPointLight::SetScene() {
 
 	light = gApi.CreatePointLight();
 
-	gApi.SetMeshMaterial(mesh, material);
+	gApi.SetMeshMaterialInstance(mesh, material);
 
 	gApi.SetPointLightPosition(light, engine::Vec3f({ 2.0f, 2.f, 5.0f }));
 

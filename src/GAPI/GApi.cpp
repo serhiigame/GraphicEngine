@@ -1,5 +1,7 @@
 #include "GApi.h"
 
+#include <algorithm>
+
 #include "../LLR/Llr.h"
 #include "../GU/ImageIO.h"
 #include "../GU/SceneIO.h"
@@ -64,28 +66,6 @@ namespace engine
 
 			IFramebuffer * OutputFramebuffer;
 
-		};
-
-		class MaterialObject
-		{
-
-		public:
-			bool IsValid() const { return m_materialId != NULL; }
-
-			int GetMaterilId() const { return m_materialId; }
-
-			void SetMaterilId(const int id) { m_materialId = id; }
-
-			void AddMaterialInstance(Material * material)
-			{
-				m_materials.push_back(material);
-			}
-
-			std::vector<Material *> & GetMaterialInstances() { return m_materials; }
-
-		private:
-			std::vector<Material *> m_materials;
-			int m_materialId = NULL;
 		};
 
 		class GApiImpl
@@ -230,10 +210,14 @@ namespace engine
 				delete mesh;
 			}
 
-			void CreateGbuffer(ShaderInfo & shaderInfo)
+			bool CreateGbuffer(ShaderDesc & shaderInfo)
 			{
 
 				Shader * shader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
+				if (!shader->IsValid())
+				{
+					return false;
+				}
 
 				RanderStageShaderInputs shaderInputs;
 				RanderStageShaderOutputs shaderOutputs;
@@ -244,14 +228,17 @@ namespace engine
 					shaderOutputs.Texture2dInputs.emplace(output.Binding, texture);
 				}
 
+				m_materialGbufferObject.m_shaderDesc = shaderInfo;
+
 				m_gBuffRenderStage = CreateGbufferRenderStege(shader->m_shader, shaderInputs, shaderOutputs, m_gBufferFb);
 			}
 
-			MaterialHandler RegisterMaterial(ShaderInfo & ShaderInfo)
+			MaterialHandler CreateMaterial(ShaderDesc & shaderInfo)
 			{
+				//TODO: GenMaterialId
 				int materialId = m_materialIdCounter++;
 
-				Shader * shader = CreateShader(ShaderInfo.vertShaderPath, ShaderInfo.fragShaderPath);
+				Shader * shader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
 
 				if (!shader)
 				{
@@ -259,11 +246,10 @@ namespace engine
 				}
 
 				MaterialObject materialObject;
-
-				m_materials[materialId].Shader = shader;
-				m_materials[materialId].ShaderInputDescs = ShaderInfo.Inputs;
-
 				materialObject.SetMaterilId(materialId);
+
+				materialObject.SetMaterialShaderDesc( shaderInfo );
+				materialObject.SetMaterialShader( shader );
 
 				RanderStageShaderInputs globalShaderInputs;
 
@@ -273,7 +259,7 @@ namespace engine
 
 				m_lightRenderStages.push_back(renderStage);
 
-				m_materialObjects[materialId] = std::move(materialObject);
+				m_materialLightingObjects.push_back(materialObject);
 
 				MaterialHandler materialHandler;
 				materialHandler.m_materialId = materialId;
@@ -281,39 +267,40 @@ namespace engine
 				return materialHandler;
 			}
 
-			Material * CreateMaterial(MaterialHandler & handler)
+			MaterialInstance * CreateMaterialInstance(MaterialHandler & handler)
 			{
 				int materialId = handler.GetMaterialId();
 				
-				auto findedMaterialObject = m_materialObjects.find(materialId);
+				auto materialLightingObject = std::find_if(m_materialLightingObjects.begin(), m_materialLightingObjects.end(), [materialId](MaterialObject & mo) {return materialId == mo.GetMaterilId(); });
 
-				if (findedMaterialObject == m_materialObjects.end())
+				if (materialLightingObject == m_materialLightingObjects.end())
 				{
 					return nullptr;
 				}
 	
+				MaterialInstance * materialInstance = new MaterialInstance(&m_materialGbufferObject, &materialLightingObject[0]);
 
-				MaterialObject & materialObject = findedMaterialObject->second;
-				MaterialDescription & matDesc =  m_materials[materialObject.GetMaterilId()];
-
-				Material * material = new Material;
-				material->m_materialId = materialObject.GetMaterilId();
-
-				for (auto inpudDesc : matDesc.ShaderInputDescs)
+				for (auto inpudDesc : materialLightingObject->GetMaterilShaderDesc().Inputs)
 				{
 					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
 					{
-						material->m_materialInputs[inpudDesc.Binding] = shaderInput;
+						materialInstance->m_materialLightingInputs[inpudDesc.Binding] = shaderInput;
 					}
 				}
 
-				materialObject.AddMaterialInstance(material);
+				for (auto inpudDesc : m_materialGbufferObject.GetMaterilShaderDesc().Inputs)
+				{
+					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
+					{
+						materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = shaderInput;
+					}
+				}
 
-				m_resources.insert(material);
-				return material;
+				//TODO: use material instance handlers
+				return materialInstance;
 			}
 
-			void SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
+			void SetMaterialInstanceParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
 			{
 				IShaderInput * shaderInput = FindShaderInput(material, paramName);
 
@@ -330,7 +317,7 @@ namespace engine
 				SetShaderInputConstant(shaderInput, param);
 			}
 
-			void SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture)
+			void SetMaterialInstanceParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture)
 			{
 				IShaderInput * shaderInput = FindShaderInput(material, paramName);
 
@@ -347,10 +334,10 @@ namespace engine
 				SetShaderInputTexture2d(shaderInput, texture);
 			}
 
-			void DeleteMaterial(Material * material) {
-				m_resources.erase(material);
-				delete material;
-			}
+			//void DeleteMaterial(Material * material) {
+				//m_resources.erase(material);
+			//	delete material;
+			//}
 
 			Camera * CreateCamera()
 			{
@@ -447,17 +434,31 @@ namespace engine
 
 			void RenderGeometry(const std::vector<Mesh *> meshes, const Camera * camera)
 			{
-				IShader * gShader = m_gBuffRenderStage.Shader;
-				gShader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
+				IShader * shader = m_gBuffRenderStage.Shader;
+				shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
 				
-				for (Mesh * mesh : meshes)
-				{
-					BingMesh(mesh);
-					
-					IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
-					IShader * shader = m_gBuffRenderStage.Shader;
-					IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
-					renderPass->Execute(shader, framebuffer);
+
+				for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
+				{					
+					for (auto mesh : materialInstances->m_meshes)
+					{
+						BingMesh(mesh);
+
+						for (auto materialInput : materialInstances->m_materialGbufferInputs)
+						{
+							int binding = materialInput.first;
+							IShaderInput * shaderInput = materialInput.second;
+
+							if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+							{
+								shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
+							}
+						}
+
+						IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
+						IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
+						renderPass->Execute(shader, framebuffer);
+					}
 				}
 			}
 
@@ -479,11 +480,10 @@ namespace engine
 						// TODO: set global constant
 						shader->AttachConstant(pointLight->m_pointLight, 1);
 
-						for (auto materialObjectIt : m_materialObjects) {
-							auto & materialObject = materialObjectIt.second;
-							for (auto materialInstances : materialObject.GetMaterialInstances())
+						for (auto materialObjectIt : m_materialLightingObjects) {
+							for (auto materialInstances : materialObjectIt.GetMaterialInstances())
 							{
-								for (auto materialInput : materialInstances->m_materialInputs)
+								for (auto materialInput : materialInstances->m_materialLightingInputs)
 								{
 									int binding = materialInput.first;
 									IShaderInput * shaderInput = materialInput.second;
@@ -573,13 +573,13 @@ namespace engine
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
 
-				for (auto texture2dInput : shaderInputs.Texture2dInputs)
-				{
-					const uint32_t textureLocation = texture2dInput.first;
-					const ITexture2D * texture = texture2dInput.second;
+				//for (auto texture2dInput : shaderInputs.Texture2dInputs)
+				//{
+				//	const uint32_t textureLocation = texture2dInput.first;
+				//	const ITexture2D * texture = texture2dInput.second;
 
-					renderStage.Shader->AttachTexture2d(texture, textureLocation);
-				}
+				//	renderStage.Shader->AttachTexture2d(texture, textureLocation);
+				//}
 
 				if(!shaderOutputs.Texture2dInputs.empty())
 				{
@@ -696,26 +696,43 @@ namespace engine
 				return nullptr;
 			}
 
-			IShaderInput * FindShaderInput(Material * material, const std::string & paramName)
+
+			//XXX: fix me
+			IShaderInput * FindShaderInput(MaterialInstance * material, const std::string & paramName)
 			{
-				const std::vector<ShaderInputDesc> & descriptions = m_materials.at(material->m_materialId).ShaderInputDescs;
-
-				auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
-
-				if (findedMatDesc == descriptions.end())
 				{
-					return nullptr;
+					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialLightingObject()->GetMaterilShaderDesc().Inputs;
+
+					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
+
+					if (findedMatDesc != descriptions.end())
+					{
+						auto materialInputs = material->m_materialLightingInputs;
+						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
+
+						if (findedShaderInput != materialInputs.end())
+						{
+							return findedShaderInput->second;
+						}
+					}
 				}
-
-				auto materialInputs = material->m_materialInputs;
-				auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-				if (findedShaderInput == materialInputs.end())
 				{
-					return nullptr;
-				}
+					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialGbufferObject()->GetMaterilShaderDesc().Inputs;
 
-				return findedShaderInput->second;
+					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
+
+					if (findedMatDesc != descriptions.end())
+					{
+						auto materialInputs = material->m_materialGbufferInputs;
+						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
+
+						if (findedShaderInput != materialInputs.end())
+						{
+							return findedShaderInput->second;
+						}
+					}
+				}
+				
 			}
 
 			template<class T>
@@ -793,15 +810,15 @@ namespace engine
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
-
-			std::map<int, MaterialDescription> m_materials;
+			MaterialObject m_materialGbufferObject;
+			std::vector<MaterialObject> m_materialLightingObjects;
 
 			int m_materialIdCounter = 1;
 			int m_materialInstanceIdCounter = 1;
 
 
 			std::set<IResource *> m_resources;
-			std::map<int, MaterialObject> m_materialObjects; // materialId / materialObject
+			//std::map<int, MaterialObject> m_materialObjects; // materialId / materialObject
 		};
 		
 		GApi::GApi()
@@ -836,34 +853,29 @@ namespace engine
 		{
 			m_impl->DeleteMesh(mesh);
 		}
-
-		void GApi::CreateGbuffer(ShaderInfo & ShaderInfo)
+		bool GApi::CreateGbuffer(ShaderDesc & shaderDesc)
 		{
-			m_impl->CreateGbuffer(ShaderInfo);
+			return m_impl->CreateGbuffer(shaderDesc);
 		}
 
-		MaterialHandler GApi::RegisterMaterial(ShaderInfo & ShaderInfo)
+		MaterialHandler GApi::CreateMaterial(ShaderDesc & shaderDesc)
 		{
-			return m_impl->RegisterMaterial(ShaderInfo);
+			return m_impl->CreateMaterial(shaderDesc);
 		}
 
-		Material * GApi::CreateMaterial(MaterialHandler & handler)
+		MaterialInstance * GApi::CreateMaterialInstance(MaterialHandler & handler)
 		{
-			return m_impl->CreateMaterial(handler);
+			return m_impl->CreateMaterialInstance(handler);
 		}
 
-		void GApi::SetMaterialParameterF4(Material * material, const std::string & paramName, const Vec4f & param)
+		void GApi::SetMaterialParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
 		{
-			m_impl->SetMaterialParameterF4(material, paramName, param);
+			m_impl->SetMaterialInstanceParameterF4(material, paramName, param);
 		}
 
-		void GApi::SetMaterialParameterTex2d(Material * material, const std::string & paramName, Texture2d * texture)
+		void GApi::SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture)
 		{
-			m_impl->SetMaterialParameterTex2d(material, paramName, texture);
-		}
-
-		void GApi::DeleteMaterial(Material * material) {
-			m_impl->DeleteMaterial(material);
+			m_impl->SetMaterialInstanceParameterTex2d(material, paramName, texture);
 		}
 
 		Camera * GApi::CreateCamera()
@@ -922,9 +934,9 @@ namespace engine
 			mesh->m_transform->Write(0, sizeof(Mat4f), &transform[0]);
 		}
 
-		void GApi::SetMeshMaterial(Mesh * mesh, Material * material)
+		void GApi::SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * material)
 		{
-			material->m_meshes.push_back(mesh);
+			material->AddMesh(mesh);
 		}
 
 		void GApi::SetPointLightPosition(PointLight * light, const Vec3f & position)

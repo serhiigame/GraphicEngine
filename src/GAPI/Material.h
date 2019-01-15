@@ -13,7 +13,6 @@ namespace engine
 	{
 		class IShaderInput;
 		class MaterialObject;
-		class Material;
 		class Shader;
 		class Mesh;
 
@@ -36,27 +35,19 @@ namespace engine
 
 		struct ShaderOutputDesc
 		{
-			ShaderOutputDesc() : Type(EMaterialInputType::TEXTURE) {}
-	
 			std::string Name;
-			const EMaterialInputType Type;
+			EMaterialInputType Type = EMaterialInputType::TEXTURE;
 			int Binding;
 		};
 	
 
-		struct ShaderInfo
+		struct ShaderDesc
 		{
 			std::string vertShaderPath;
 			std::string fragShaderPath;
 
 			std::vector<ShaderInputDesc> Inputs;
 			std::vector<ShaderOutputDesc> Outputs;
-		};
-
-		struct MaterialDescription
-		{
-			Shader * Shader;
-			std::vector<ShaderInputDesc> ShaderInputDescs;
 		};
 
 		class MaterialHandler
@@ -70,15 +61,61 @@ namespace engine
 			int m_materialId = NULL;
 		};
 
-		
 
-		class Material : public IResource
+		class MaterialInstance;
+
+		class MaterialObject
 		{
-			friend class GApi;
 			friend class GApiImpl;
-		protected:
+		public:
+			bool IsValid() const { return m_materialId != NULL && !m_shader; }
+
+			int GetMaterilId() const { return m_materialId; }
+
+			Shader * GetMaterilShader() { return m_shader; }
+
+			ShaderDesc GetMaterilShaderDesc() { return m_shaderDesc; }
+
+			void AddMaterialInstance(MaterialInstance * material) { m_materials.push_back(material); }
+
+			std::vector<MaterialInstance *> & GetMaterialInstances() { return m_materials; }
+
+		private:
+			void SetMaterilId(const int id) { m_materialId = id; }
+
+			void SetMaterialShader(Shader * shader) { m_shader = shader; }
+
+			void SetMaterialShaderDesc(ShaderDesc & shaderDesc) { m_shaderDesc = shaderDesc; }
+
+			Shader * m_shader = nullptr;
+			ShaderDesc m_shaderDesc;
+			std::vector<MaterialInstance *> m_materials;
 			int m_materialId = NULL;
-			std::map<int, IShaderInput * > m_materialInputs;
+		};
+
+		class MaterialInstance final
+		{
+			friend class GApiImpl;
+		public:
+			MaterialInstance(MaterialObject * pMaterialGbufferObject, MaterialObject * pMaterialLightingObject)
+				: m_pMaterialGbufferObject(pMaterialGbufferObject)
+				, m_pMaterialLightingObject(pMaterialLightingObject)
+			{
+				m_pMaterialGbufferObject->AddMaterialInstance(this);
+				m_pMaterialLightingObject->AddMaterialInstance(this);
+
+			}
+			MaterialObject * GetMaterialGbufferObject() { return m_pMaterialGbufferObject; }
+			MaterialObject * GetMaterialLightingObject() { return m_pMaterialLightingObject; }
+
+			void AddMesh(Mesh * mesh) { m_meshes.push_back(mesh); }
+		protected:
+			std::map<int, IShaderInput * > m_materialGbufferInputs;
+			std::map<int, IShaderInput * > m_materialLightingInputs;
+
+			MaterialObject * m_pMaterialGbufferObject;
+			MaterialObject * m_pMaterialLightingObject;
+
 			std::vector<Mesh *> m_meshes;
 		};
 	}

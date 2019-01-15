@@ -21,6 +21,6 @@ void main(){
 	vec4 pos = u_Camara.projection * u_Camara.view * u_Model.transform * vec4(vertexPos, 1.f);
 	
 	v_pos = pos.xyz ;
-	v_norm = (transpose(inverse(u_Model.transform)) * vec4( vertexNorm, 1.f)).xyz;
+	v_norm = (transpose(inverse(u_Model.transform)) * vec4( vertexNorm, 0.f)).xyz;
 	gl_Position = pos;
 }

@@ -48,10 +48,10 @@ engine::graphic::RawMeshData DemoUtils::CreatePlane(const float width, const flo
 
 
 	meshData.Normals = {
-		{ 0.f, 0.f, -1.0f }
-		,{ 0.f, 0.f, -1.0f }
-		,{ 0.f, 0.f, -1.0f }
-		,{ 0.f, 0.f, -1.0f }
+		{ 0.f, 0.f, 1.0f }
+		,{ 0.f, 0.f, 1.0f }
+		,{ 0.f, 0.f, 1.0f }
+		,{ 0.f, 0.f, 1.0f }
 	};
 
 	meshData.Uv = {

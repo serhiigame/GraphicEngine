@@ -131,14 +131,14 @@ namespace engine
 			const Texture2dGL * texGl = (const Texture2dGL *) texture;
 			const GLuint texId = texGl->GetId();
 
-			m_texture2dAttachment.emplace(location, texId);
+			m_texture2dAttachment.insert_or_assign(location, texId);
 		}
 		void ShaderOpenGL::AttachTextureCubeMap(const ITextureCubeMap * texture, const int location)
 		{
 			const TextureCubeMapGL * texGl = (const TextureCubeMapGL *)texture;
 			const GLuint texId = texGl->GetId();
 
-			m_textureCubeMapAttachment.emplace(location, texId);
+			m_textureCubeMapAttachment.insert_or_assign(location, texId);
 		}
 	}
 }

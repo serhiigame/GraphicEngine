@@ -19,6 +19,8 @@ namespace engine
 
 			void SetShaderInput(IShaderInput * shaderInput, const int location);
 
+			bool IsValid() { return m_shader != nullptr; }
+
 		protected:
 			IShader * m_shader = nullptr;
 			int m_priority = -1;

@@ -19,16 +19,18 @@ in vec3 v_pos;
 in vec3 v_norm;
 in vec2 v_uv;
 
+layout(binding = 6) uniform sampler2D albedo;
 
-layout (location = 0) out vec4 diffuse;
-layout (location = 1) out vec4 position;
-layout (location = 2) out vec4 normal;
-layout (location = 3) out vec4 uv;
+
+layout (location = 0) out vec4 o_albedo;
+layout (location = 1) out vec4 o_position;
+layout (location = 2) out vec4 o_normal;
+layout (location = 3) out vec4 o_uv;
 
 
 void main() { 
-	diffuse = vec4(0., 0., 1., 1.);
-	position = vec4(v_pos, 1.f); 
-	normal = vec4(v_norm, 1.f);
-	uv = vec4(v_uv, 0., 1.);
+	o_albedo = texture(albedo, v_uv);
+	o_position = vec4(v_pos, 1.f); 
+	o_normal = vec4(v_norm, 1.f);
+	o_uv = vec4(v_uv, 0., 1.);
 }
