@@ -34,10 +34,12 @@ void main() {
 	//vec3 L = pointLightPos - position;
 
 
-	vec3 pointLightPos = (   vec4(vec3(0.,2.0, -10.00), 1.)).xyz;   ;
-	vec4 worldPosition =   inverse( u_Camara.projection * u_Camara.view) * vec4(texture(pos, v_iuv).xyz, 1.);
-	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_iuv).xyz, 1.);
-	//worldPosition /= worldPosition.w;
+	vec3 pointLightPos = ( vec4(vec3(-3.,3.0, 2.00), 1.)).xyz;   ;
+
+	vec4 worldPosition = vec4(texture(pos, v_iuv).xyz, 1.) * inverse( u_Camara.projection);
+	worldPosition = worldPosition * inverse( u_Camara.view);
+
+	vec4 worldNormal =   inverse(u_Camara.view) * vec4(texture(norm, v_iuv).xyz, 0.);
 	vec3 L = pointLightPos - worldPosition.xyz;
 	vec3 N =  texture(norm, v_iuv).xyz;
 	
@@ -67,9 +69,11 @@ void main() {
 
 
 
+	//color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+
+
+
 	color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 
-
-
-	//color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+	//color = worldPosition;
 }

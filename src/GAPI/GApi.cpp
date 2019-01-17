@@ -153,7 +153,7 @@ namespace engine
 				Llr::DeleteLlr(m_llr);
 			}
 
-			void BingMesh(Mesh * mesh) {
+			void BindMesh(const Mesh * mesh) {
 				IShader * gShader = m_gBuffRenderStage.Shader;
 
 				gShader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
@@ -171,6 +171,10 @@ namespace engine
 			{
 				Scene * scene = new Scene;
 				m_resources.insert(scene);
+
+
+				//XXX: please fix me
+				m_scene = scene;
 
 				return scene;
 			}
@@ -298,6 +302,13 @@ namespace engine
 
 				//TODO: use material instance handlers
 				return materialInstance;
+			}
+
+			void SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * materialInstance)
+			{
+				m_scene->SetMeshMaterialInstance(mesh, materialInstance);
+				
+				//m_materialIdMeshRelationship.insert(materialInstance->GetId(), mesh);
 			}
 
 			void SetMaterialInstanceParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
@@ -440,24 +451,30 @@ namespace engine
 
 				for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
 				{					
-					for (auto mesh : materialInstances->m_meshes)
+					//for (auto mesh : materialInstances->m_meshes)
 					{
-						BingMesh(mesh);
-
-						for (auto materialInput : materialInstances->m_materialGbufferInputs)
+						for (auto mm : m_scene->GetMeshMaterialRelationship())
 						{
-							int binding = materialInput.first;
-							IShaderInput * shaderInput = materialInput.second;
+							MaterialInstance * materialInstance = mm.first;
+							const Mesh * mesh = mm.second;
 
-							if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+							BindMesh(mesh);
+
+							for (auto materialInput : materialInstances->m_materialGbufferInputs)
 							{
-								shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
-							}
-						}
+								int binding = materialInput.first;
+								IShaderInput * shaderInput = materialInput.second;
 
-						IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
-						IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
-						renderPass->Execute(shader, framebuffer);
+								if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+								{
+									shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
+								}
+							}
+
+							IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
+							IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
+							renderPass->Execute(shader, framebuffer);
+						}
 					}
 				}
 			}
@@ -810,8 +827,12 @@ namespace engine
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
+			Scene * m_scene;
+
 			MaterialObject m_materialGbufferObject;
 			std::vector<MaterialObject> m_materialLightingObjects;
+
+			std::multimap<int , Mesh *> m_materialIdMeshRelationship;
 
 			int m_materialIdCounter = 1;
 			int m_materialInstanceIdCounter = 1;
@@ -936,7 +957,7 @@ namespace engine
 
 		void GApi::SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * material)
 		{
-			material->AddMesh(mesh);
+			m_impl->SetMeshMaterialInstance(mesh, material);
 		}
 
 		void GApi::SetPointLightPosition(PointLight * light, const Vec3f & position)

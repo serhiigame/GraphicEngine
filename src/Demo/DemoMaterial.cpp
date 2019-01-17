@@ -41,7 +41,7 @@ void DemoMaterial::SetScene()  {
 	mesh2 = gApi.CreateMesh(rawMeshPlane);
 
 	gApi.SetMeshMaterialInstance(mesh1, material1);
-	//gApi.SetMeshMaterialInstance(mesh2, material2);
+	gApi.SetMeshMaterialInstance(mesh2, material2);
 
 	gApi.SetMeshTransform(mesh2, gte::Transpose(sphereTransform.GetHMatrix()));
 	gApi.SetMeshTransform(mesh2, gte::Transpose(planeTransform.GetMatrix()));

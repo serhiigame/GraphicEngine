@@ -5,17 +5,19 @@
 #include "IResource.h"
 
 #include <vector>
+#include <map>
 
 namespace engine
 {
 	namespace graphic
 	{
 		class Mesh;
+		class MaterialInstance;
 		class Camera;
 		class PointLight;
 		class TextureCubeMap;
 
-		class Scene : public IResource
+		class Scene final : public IResource
 		{
 		public:
 			void SetCamera(Camera * camera);
@@ -27,6 +29,12 @@ namespace engine
 
 			const std::vector< Mesh *> & GetMeshes() { return m_meshes; }
 
+			void AddMaterialInstance(MaterialInstance * materialInstance) { m_materialInstances.push_back(materialInstance); }
+
+			void SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * materialInstance) { m_materialInstanceMeshRelationship.emplace(materialInstance, mesh); }
+
+			const std::multimap< MaterialInstance *, Mesh *> GetMeshMaterialRelationship() const { return m_materialInstanceMeshRelationship; }
+
 			void AddPointLight(PointLight * mesh);
 
 			void SetSkybox(TextureCubeMap * cubemap);
@@ -37,6 +45,10 @@ namespace engine
 
 		protected:
 			std::vector< Mesh *> m_meshes;
+
+			std::vector< MaterialInstance *> m_materialInstances;
+			std::multimap< MaterialInstance *, Mesh *> m_materialInstanceMeshRelationship;
+
 			std::vector< PointLight *> m_pointLights;
 			TextureCubeMap * m_skybox = nullptr;
 			Camera * m_camera = nullptr;

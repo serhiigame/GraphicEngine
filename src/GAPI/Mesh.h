@@ -13,7 +13,7 @@ namespace engine
 		class IBuffer;
 		class IConstant;
 		
-		class Mesh : public GeomTransform, IResource
+		class Mesh : public GeomTransform, public IResource
 		{
 			friend class GApi;
 			friend class GApiImpl;
@@ -51,5 +51,10 @@ namespace engine
 			IBuffer * m_idx = nullptr;
 			IConstant * m_transform = nullptr;
 		};
+
+		bool operator<(const Mesh& lhs, const Mesh& rhs)
+		{
+			return lhs.GetId() < rhs.GetId();
+		}
 	}
 }

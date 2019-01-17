@@ -108,7 +108,8 @@ namespace engine
 			MaterialObject * GetMaterialGbufferObject() { return m_pMaterialGbufferObject; }
 			MaterialObject * GetMaterialLightingObject() { return m_pMaterialLightingObject; }
 
-			void AddMesh(Mesh * mesh) { m_meshes.push_back(mesh); }
+			int GetId() const { return m_materialInstanceId; }
+
 		protected:
 			std::map<int, IShaderInput * > m_materialGbufferInputs;
 			std::map<int, IShaderInput * > m_materialLightingInputs;
@@ -116,7 +117,9 @@ namespace engine
 			MaterialObject * m_pMaterialGbufferObject;
 			MaterialObject * m_pMaterialLightingObject;
 
-			std::vector<Mesh *> m_meshes;
+			int m_materialInstanceId = NULL;
 		};
+
+		bool operator<(const MaterialInstance& lhs, const MaterialInstance & rhs);
 	}
 }
