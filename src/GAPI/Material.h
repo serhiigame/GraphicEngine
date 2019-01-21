@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IResource.h"
+#include "api.h"
 
-#include "Texture2d.h"
+#include "EGApiEnums.h"
 
 #include <map>
 #include <vector>
@@ -31,6 +31,7 @@ namespace engine
 			std::string Name;
 			EMaterialInputType Type;
 			int Binding;
+			IShaderInput * Fallback;
 		};
 
 		struct ShaderOutputDesc
@@ -80,6 +81,8 @@ namespace engine
 
 			std::vector<MaterialInstance *> & GetMaterialInstances() { return m_materials; }
 
+			IShaderInput * GetMaterialInputFallback(const std::string & name);
+
 		private:
 			void SetMaterilId(const int id) { m_materialId = id; }
 
@@ -121,5 +124,14 @@ namespace engine
 		};
 
 		bool operator<(const MaterialInstance& lhs, const MaterialInstance & rhs);
+
+
+
+		class MaterialHelper final
+		{
+		public:
+			GAPI_EXPORT
+			static ShaderInputDesc MakeShaderTextureInputDesc(const std::string & Name, const int Binding, const GeTexture2d & fallback);
+		};
 	}
 }

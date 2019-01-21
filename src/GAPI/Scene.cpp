@@ -5,9 +5,9 @@ namespace engine
 {
 	namespace graphic
 	{
-		void Scene::AddMesh(Mesh * mesh)
+		void Scene::AddMesh(GeMesh mesh)
 		{
-			m_meshes.push_back(mesh);
+			m_meshes.insert(mesh);
 		}
 
 		void Scene::AddPointLight(PointLight * pointLight)
@@ -20,19 +20,14 @@ namespace engine
 			m_skybox = cubemap;
 		}
 
-		void Scene::SetCamera(Camera * camera)
+		void Scene::SetCamera(GeCamera camera)
 		{
 			m_camera = camera;
 		}
 
-		Camera * Scene::GetCamera()
+		const GeCamera Scene::GetCamera() const
 		{
 			return m_camera;
-		}
-
-		const Camera * Scene::GetCamera() const
-		{
-			return static_cast<const Scene *>(this)->GetCamera();
 		}
 	}
 }

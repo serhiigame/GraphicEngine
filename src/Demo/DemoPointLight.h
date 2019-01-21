@@ -11,6 +11,6 @@ protected:
 	virtual void Update(double t) override;
 
 private:
-	engine::graphic::Mesh * mesh = nullptr;
+	engine::graphic::GeMesh mesh;
 	engine::graphic::PointLight * light = nullptr;
 };

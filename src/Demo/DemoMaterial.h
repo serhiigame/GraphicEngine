@@ -10,7 +10,7 @@ protected:
 
 private:
 
-	engine::graphic::Mesh * mesh1 = nullptr;
-	engine::graphic::Mesh * mesh2 = nullptr;
+	engine::graphic::GeMesh mesh1;
+	engine::graphic::GeMesh mesh2;
 	engine::graphic::PointLight * light = nullptr;
 };

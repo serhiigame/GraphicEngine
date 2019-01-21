@@ -1,5 +1,6 @@
 #include "DemoEnvironment.h"
 
+#include "DemoUtil.h"
 
 void DemoEnvironment::SetScene()  {
 

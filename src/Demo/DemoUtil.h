@@ -24,7 +24,7 @@ public:
 	static engine::graphic::RawMeshData CreatePlane(const float width, const float height);
 	static engine::graphic::RawMeshData CreateSphere(const float radius);
 
-	engine::graphic::Texture2d * LoadTexture2d(const std::string & path);
+	engine::graphic::GeTexture2d LoadTexture2d(const std::string & path);
 
 	engine::graphic::TextureCubeMap * LoadCubeMap(const std::string & path);
 

@@ -1,8 +1,6 @@
 #pragma once
 #include "DemoBase.h"
 
-#include "DemoUtil.h"
-
 class DemoEnvironment : public DemoBase
 {
 protected:
@@ -11,6 +9,6 @@ protected:
 	virtual void Update(double t) override;
 
 private:
-	engine::graphic::Mesh * mesh = nullptr;
+	engine::graphic::GeMesh mesh;
 	engine::graphic::PointLight * light = nullptr;
 };

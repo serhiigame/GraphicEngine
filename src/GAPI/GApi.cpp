@@ -7,6 +7,8 @@
 #include "../GU/SceneIO.h"
 
 #include "Scene.h"
+#include "ResourceManager.h"
+
 #include "Mesh.h"
 #include "Material.h"
 #include "Camera.h"
@@ -15,6 +17,8 @@
 #include "Shader.h"
 #include "ShaderInputs.h"
 #include "PointLight.h"
+
+#include "IResource.h"
 
 namespace engine
 {
@@ -82,10 +86,10 @@ namespace engine
 
 			void Deinit()
 			{
-				for (IResource * resource : m_resources)
-				{
-					delete resource;
-				}
+				//for (IResource * resource : m_resources)
+				//{
+				//	delete resource;
+				//}
 
 				//if (m_gBufferShader)
 				//{
@@ -185,9 +189,13 @@ namespace engine
 				delete scene;
 			}
 
-			Mesh * CreateMesh(const RawMeshData & meshData)
+			GeMesh CreateMesh(const RawMeshData & meshData)
 			{
-				Mesh * mesh = new Mesh;
+				GeMesh geMesh = m_resourceManager.CreateMesh();
+				Mesh * mesh = m_resourceManager.GetMesh(geMesh);
+				
+
+
 				m_resources.insert(mesh);
 
 				mesh->m_pos = m_llr->CreateBuffer(sizeof(meshData.Positions[0]) * meshData.Positions.size());
@@ -205,13 +213,25 @@ namespace engine
 				mesh->m_transform = m_llr->CreateConatant(sizeof(Mat4f));
 				mesh->m_transform->Write(0, sizeof(transformMat), &transformMat);
 
-				return mesh;
+				return geMesh;
 			}
 
-			void DeleteMesh(Mesh * mesh)
+			void DeleteMesh(GeMesh mesh)
 			{
-				m_resources.erase(mesh);
-				delete mesh;
+				//TODO: delere via resource manager
+				//m_resources.erase(mesh);
+				//delete mesh;
+			}
+
+			void SetMeshTransform(GeMesh geMesh, const Mat4f & transform)
+			{
+				Mesh * mesh = m_resourceManager.GetMesh(geMesh);
+				mesh->m_transform->Write(0, sizeof(Mat4f), &transform[0]);
+			}
+
+			void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * materialInstance)
+			{
+				m_scene->SetMeshMaterialInstance(mesh, materialInstance);
 			}
 
 			bool CreateGbuffer(ShaderDesc & shaderInfo)
@@ -284,31 +304,27 @@ namespace engine
 	
 				MaterialInstance * materialInstance = new MaterialInstance(&m_materialGbufferObject, &materialLightingObject[0]);
 
-				for (auto inpudDesc : materialLightingObject->GetMaterilShaderDesc().Inputs)
-				{
-					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
-					{
-						materialInstance->m_materialLightingInputs[inpudDesc.Binding] = shaderInput;
-					}
-				}
-
 				for (auto inpudDesc : m_materialGbufferObject.GetMaterilShaderDesc().Inputs)
 				{
-					if (IShaderInput * shaderInput = CreateShaderInput(inpudDesc.Type))
+					if (inpudDesc.Type == EMaterialInputType::TEXTURE)
 					{
-						materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = shaderInput;
+						ShaderInputTexture2d * shaderTextureInput = new ShaderInputTexture2d;
+						shaderTextureInput->SetTexture(((ShaderInputTexture2d *)inpudDesc.Fallback)->GetTexture());
+
+						materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = shaderTextureInput;
 					}
+					
+					
+					//materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = inpudDesc.Fallback;
+				}
+
+				for (auto inpudDesc : materialLightingObject->GetMaterilShaderDesc().Inputs)
+				{
+					materialInstance->m_materialLightingInputs[inpudDesc.Binding] = inpudDesc.Fallback;
 				}
 
 				//TODO: use material instance handlers
 				return materialInstance;
-			}
-
-			void SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * materialInstance)
-			{
-				m_scene->SetMeshMaterialInstance(mesh, materialInstance);
-				
-				//m_materialIdMeshRelationship.insert(materialInstance->GetId(), mesh);
 			}
 
 			void SetMaterialInstanceParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
@@ -328,7 +344,7 @@ namespace engine
 				SetShaderInputConstant(shaderInput, param);
 			}
 
-			void SetMaterialInstanceParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture)
+			void SetMaterialInstanceParameterTex2d(MaterialInstance * material, const std::string & paramName, GeTexture2d geTexture)
 			{
 				IShaderInput * shaderInput = FindShaderInput(material, paramName);
 
@@ -342,7 +358,7 @@ namespace engine
 					return;
 				}
 
-				SetShaderInputTexture2d(shaderInput, texture);
+				SetShaderInputTexture2d(shaderInput, geTexture);
 			}
 
 			//void DeleteMaterial(Material * material) {
@@ -350,11 +366,11 @@ namespace engine
 			//	delete material;
 			//}
 
-			Camera * CreateCamera()
+			GeCamera CreateCamera()
 			{
-				Camera * camera = new Camera;
-				m_resources.insert(camera);
-
+				GeCamera geCamera = m_resourceManager.CreateCamera();
+				Camera * camera = m_resourceManager.GetCamera(geCamera);
+			
 				Mat4f viewMatrix;
 				Mat4f projectionMatrix;
 
@@ -366,21 +382,46 @@ namespace engine
 				camera->m_cameraTransforms->Write(0, sizeof(viewMatrix), &viewMatrix[0]);
 				camera->m_cameraTransforms->Write(sizeof(projectionMatrix), sizeof(projectionMatrix), &projectionMatrix[0]);
 
-				return camera;
+				return geCamera;
 			}
 
-			void DeleteCamera(Camera * camera)
-			{
-				m_resources.erase(camera);
-				delete camera;
+			void DeleteCamera(GeCamera camera)
+			{				
+				//m_resources.erase(camera);
+				//delete camera;
 			}
 
-			Texture2d * CreateTexture2d(size_t w, size_t h)
+			void SetCameraView(GeCamera geCamera, const Mat4f & view)
 			{
-				Texture2d * texture2d = new Texture2d;
-				m_resources.insert(texture2d);
+				Camera * camera = m_resourceManager.GetCamera(geCamera);
+				Llr * llr = GetLlr();
+				camera->m_cameraTransforms->Write(0, sizeof(Mat4f), &view[0]);
+			}
+
+			void SetCameraProjection(GeCamera geCamera, const Mat4f & projection)
+			{
+				Camera * camera = m_resourceManager.GetCamera(geCamera);
+				camera->m_cameraTransforms->Write(sizeof(Mat4f), sizeof(Mat4f), &projection[0]);
+			}
+
+			GeTexture2d CreateTexture2d(size_t w, size_t h)
+			{
+				GeTexture2d geTexture2d = m_resourceManager.CreateTexture2d();
+				Texture2d * texture2d = m_resourceManager.GetTexture2d(geTexture2d);
 				texture2d->m_texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
-				return texture2d;
+				return geTexture2d;
+			}
+
+			void DeleteTexture2d(GeTexture2d texture2d)
+			{
+				//m_resources.erase(texture2d);
+				//delete texture2d;
+			}
+
+			void Texture2dWriteImage(GeTexture2d geTexture2d, int xOffset, int yOffset, int w, int h, const void * data)
+			{
+				Texture2d * texture = m_resourceManager.GetTexture2d(geTexture2d);
+				texture->WriteImage(xOffset, yOffset, w, h, data);
 			}
 
 			Shader * CreateShader(std::string vert, std::string frag)
@@ -395,12 +436,6 @@ namespace engine
 			{
 				m_resources.erase(shader);
 				delete shader;
-			}
-
-			void DeleteTexture2d(Texture2d * texture2d)
-			{
-				m_resources.erase(texture2d);
-				delete texture2d;
 			}
 
 			TextureCubeMap * CreateTextureCubeMap(size_t size)
@@ -443,38 +478,59 @@ namespace engine
 				m_acumuFb->Cleare();
 			}
 
-			void RenderGeometry(const std::vector<Mesh *> meshes, const Camera * camera)
+			//void RenderGeometry(const std::vector<GeMesh> meshes, const Camera * camera)
+			void RenderGeometry(Scene * scene)
 			{
 				IShader * shader = m_gBuffRenderStage.Shader;
-				shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
-				
+				GeCamera geCamera = scene->GetCamera();
+				const Camera * camera = m_resourceManager.GetCamera(geCamera);
 
+
+				shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
 				for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
 				{					
-					//for (auto mesh : materialInstances->m_meshes)
+					for (auto mm : scene->GetMeshMaterialRelationship())
 					{
-						for (auto mm : m_scene->GetMeshMaterialRelationship())
+						MaterialInstance * materialInstance = mm.first;
+						const GeMesh geMesh = mm.second;
+
+						const std::set<GeMesh> & sceneMeshes = scene->GetMeshes();
+
+						if (sceneMeshes.find(geMesh) == sceneMeshes.end())
 						{
-							MaterialInstance * materialInstance = mm.first;
-							const Mesh * mesh = mm.second;
+							continue;
+						}
 
-							BindMesh(mesh);
+						Mesh * mesh = m_resourceManager.GetMesh(geMesh);
 
-							for (auto materialInput : materialInstances->m_materialGbufferInputs)
+
+						BindMesh(mesh);
+
+						for (auto materialInput : materialInstances->m_materialGbufferInputs)
+						{
+							int binding = materialInput.first;
+							IShaderInput * shaderInput = materialInput.second;
+
+							if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
 							{
-								int binding = materialInput.first;
-								IShaderInput * shaderInput = materialInput.second;
+								GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
 
-								if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+								Texture2d * texture = nullptr;
+								if (geTexture.IsValid())
 								{
-									shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
+									texture = m_resourceManager.GetTexture2d(geTexture);
+									shader->AttachTexture2d(texture->m_texture, binding);
+								}
+								else
+								{
+									//TODO: warning 
 								}
 							}
-
-							IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
-							IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
-							renderPass->Execute(shader, framebuffer);
 						}
+
+						IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
+						IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
+						renderPass->Execute(shader, framebuffer);
 					}
 				}
 			}
@@ -511,7 +567,9 @@ namespace engine
 									}
 									else if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
 									{
-										shader->AttachTexture2d(((ShaderInputTexture2d *)shaderInput)->GetTexture()->m_texture, binding);
+										GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
+										Texture2d * texture = m_resourceManager.GetTexture2d(geTexture);
+										shader->AttachTexture2d(texture->m_texture, binding);
 									}
 								}
 
@@ -769,7 +827,7 @@ namespace engine
 				constant->m_constant->Write(0, sizeof(T), &data);
 			}
 
-			void SetShaderInputTexture2d(IShaderInput * shaderInput, Texture2d * texture)
+			void SetShaderInputTexture2d(IShaderInput * shaderInput, GeTexture2d texture)
 			{
 				if (!shaderInput)
 				{
@@ -814,6 +872,10 @@ namespace engine
 
 			Llr * m_llr;
 
+			ResourceManager m_resourceManager;
+
+			Scene * m_scene;
+
 			IFramebuffer * m_gBufferFb = nullptr;
 			IFramebuffer * m_acumuFb = nullptr;
 
@@ -827,7 +889,7 @@ namespace engine
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
-			Scene * m_scene;
+			
 
 			MaterialObject m_materialGbufferObject;
 			std::vector<MaterialObject> m_materialLightingObjects;
@@ -865,12 +927,12 @@ namespace engine
 			m_impl->DeleteScene(scene);
 		}
 
-		Mesh * GApi::CreateMesh(const RawMeshData & meshData)
+		GeMesh GApi::CreateMesh(const RawMeshData & meshData)
 		{
 			return m_impl->CreateMesh(meshData);
 		}
 
-		void GApi::DeleteMesh(Mesh * mesh)
+		void GApi::DeleteMesh(GeMesh mesh)
 		{
 			m_impl->DeleteMesh(mesh);
 		}
@@ -894,29 +956,34 @@ namespace engine
 			m_impl->SetMaterialInstanceParameterF4(material, paramName, param);
 		}
 
-		void GApi::SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture)
+		void GApi::SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, GeTexture2d texture)
 		{
 			m_impl->SetMaterialInstanceParameterTex2d(material, paramName, texture);
 		}
 
-		Camera * GApi::CreateCamera()
+		GeCamera GApi::CreateCamera()
 		{
 			return m_impl->CreateCamera();
 		}
 
-		void GApi::DeleteCamera(Camera * camera)
+		void GApi::DeleteCamera(GeCamera camera)
 		{
 			m_impl->DeleteCamera(camera);
 		}
 
-		Texture2d * GApi::CreateTexture2d(const size_t width, const size_t heigth)
+		GeTexture2d GApi::CreateTexture2d(const size_t width, const size_t heigth)
 		{
 			return m_impl->CreateTexture2d(width, heigth);
 		}
 
-		void GApi::DeleteTexture2d(Texture2d * texture2d)
+		void GApi::DeleteTexture2d(GeTexture2d texture2d)
 		{
 			m_impl->DeleteTexture2d(texture2d);
+		}
+
+		void GApi::Texture2dWriteImage(GeTexture2d texture2d, int xOffset, int yOffset, int w, int h, const void * data)
+		{
+			m_impl->Texture2dWriteImage(texture2d, xOffset, yOffset, w, h, data);
 		}
 
 		TextureCubeMap * GApi::CreateTextureCubeMap(size_t size)
@@ -929,15 +996,14 @@ namespace engine
 			m_impl->DeleteTextureCubeMap(textureCubeMap);
 		}
 
-		void GApi::SetCameraView(Camera * camera, const Mat4f & view)
+		void GApi::SetCameraView(GeCamera camera, const Mat4f & view)
 		{
-			Llr * llr = m_impl->GetLlr();
-			camera->m_cameraTransforms->Write(0, sizeof(Mat4f), &view[0]);
+			m_impl->SetCameraView(camera, view);
 		}
 
-		void GApi::SetCameraProjection(Camera * camera, const Mat4f & projection)
+		void GApi::SetCameraProjection(GeCamera geCamera, const Mat4f & projection)
 		{
-			camera->m_cameraTransforms->Write(sizeof(Mat4f), sizeof(Mat4f), &projection[0]);
+			m_impl->SetCameraProjection(geCamera, projection);
 		}
 
 		PointLight * GApi::CreatePointLight()
@@ -950,12 +1016,12 @@ namespace engine
 			m_impl->DeletePointLight(pointLight);
 		}
 
-		void GApi::SetMeshTransform(Mesh * mesh, const Mat4f & transform)
+		void GApi::SetMeshTransform(GeMesh geMesh, const Mat4f & transform)
 		{
-			mesh->m_transform->Write(0, sizeof(Mat4f), &transform[0]);
+			m_impl->SetMeshTransform(geMesh, transform);
 		}
 
-		void GApi::SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * material)
+		void GApi::SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * material)
 		{
 			m_impl->SetMeshMaterialInstance(mesh, material);
 		}
@@ -970,7 +1036,7 @@ namespace engine
 			light->m_pointLight->Write(sizeof(Vec3f), sizeof(float), &intensity);
 		}
 
-		void GApi::SetSceneCamera(Scene * scene, Camera * camera)
+		void GApi::SetSceneCamera(Scene * scene, GeCamera camera)
 		{
 			scene->SetCamera(camera);
 		}
@@ -980,7 +1046,7 @@ namespace engine
 			scene->SetSkybox(skybox);
 		}
 
-		void GApi::AddSceneMesh(Scene * scene, Mesh * mesh)
+		void GApi::AddSceneMesh(Scene * scene, GeMesh mesh)
 		{
 			scene->AddMesh(mesh);
 		}
@@ -994,7 +1060,7 @@ namespace engine
 		{
 			m_impl->ClearFremebuffers();
 
-			m_impl->RenderGeometry(scene->GetMeshes(), scene->GetCamera());
+			m_impl->RenderGeometry(scene);
 
 			m_impl->RenderLights(scene->GetPointLight(), scene->GetSkybox());
 

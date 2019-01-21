@@ -277,7 +277,7 @@ private:
 	GLFWwindow * m_window;
 
 
-	engine::graphic::Camera * m_camera = nullptr;
+	engine::graphic::GeCamera m_camera;
 
 	bool m_isCamereDirty = true;
 

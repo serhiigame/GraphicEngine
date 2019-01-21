@@ -16,22 +16,17 @@ namespace engine
 	
 		class Scene;
 
-		class Mesh;
-
 		class ShaderDesc;
 		class MaterialHandler;
 		class MaterialInstance;
-
-		class Camera;
-
-		class Texture2d;
+		
 		class TextureCubeMap;
 
 		class Shader;
 		class IShaderInput;
 
 		class PointLight;
-		
+
 
 		class GApi final
 		{
@@ -52,16 +47,19 @@ namespace engine
 			void DeleteScene(Scene * scene);
 
 			GAPI_EXPORT
-			Camera * CreateCamera();
+			GeCamera CreateCamera();
 
 			GAPI_EXPORT
-			void DeleteCamera(Camera * camera);
+			void DeleteCamera(GeCamera camera);
 
 			GAPI_EXPORT
-			Texture2d * CreateTexture2d(const size_t width, const size_t heigth);
+			GeTexture2d CreateTexture2d(const size_t width, const size_t heigth);
 
 			GAPI_EXPORT
-			void DeleteTexture2d(Texture2d * texture2d);
+			void DeleteTexture2d(GeTexture2d texture2d);
+
+			GAPI_EXPORT
+			void Texture2dWriteImage(GeTexture2d texture2d, int xOffset, int yOffset, int w, int h, const void * data);
 
 			GAPI_EXPORT
 			TextureCubeMap * CreateTextureCubeMap(const size_t size);
@@ -76,10 +74,10 @@ namespace engine
 			void DeletePointLight(PointLight * pointLight);
 
 			GAPI_EXPORT
-			Mesh * CreateMesh(const RawMeshData & meshData);
+			GeMesh CreateMesh(const RawMeshData & meshData);
 
 			GAPI_EXPORT
-			void DeleteMesh(Mesh * mesh);
+			void DeleteMesh(GeMesh mesh);
 
 			GAPI_EXPORT
 			bool CreateGbuffer(ShaderDesc & shaderDesc);
@@ -94,19 +92,19 @@ namespace engine
 			void SetMaterialParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param);
 
 			GAPI_EXPORT
-			void SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, Texture2d * texture);
+			void SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, GeTexture2d texture);
 
 			GAPI_EXPORT
-			void SetCameraView(Camera * camera, const Mat4f & view);
+			void SetCameraView(GeCamera camera, const Mat4f & view);
 
 			GAPI_EXPORT
-			void SetCameraProjection(Camera * camera, const Mat4f & projection);
+			void SetCameraProjection(GeCamera camera, const Mat4f & projection);
 
 			GAPI_EXPORT
-			void SetMeshTransform(Mesh * mesh, const Mat4f & transform);
+			void SetMeshTransform(GeMesh mesh, const Mat4f & transform);
 
 			GAPI_EXPORT
-			void SetMeshMaterialInstance(Mesh * mesh, MaterialInstance * material);
+			void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * material);
 
 			GAPI_EXPORT
 			void SetPointLightPosition(PointLight * light, const Vec3f & position);
@@ -115,13 +113,13 @@ namespace engine
 			void SetPointLightIntensity(PointLight * light, const float intensity);
 
 			GAPI_EXPORT
-			void SetSceneCamera(Scene * scene, Camera * camera);
+			void SetSceneCamera(Scene * scene, GeCamera camera);
 
 			GAPI_EXPORT
 			void SetSceneSkybox(Scene * scene, TextureCubeMap * skybox);
 
 			GAPI_EXPORT
-			void AddSceneMesh(Scene * scene, Mesh * mesh);
+			void AddSceneMesh(Scene * scene, GeMesh mesh);
 
 			GAPI_EXPORT
 			void AddScenePointLight(Scene * scene, PointLight * mesh);

@@ -31,7 +31,7 @@ void DemoPointLight::SetScene() {
 
 	engine::graphic::MaterialInstance * material = gApi.CreateMaterialInstance(m_diffuseMaterial);
 
-	engine::graphic::Texture2d * texture = demoUtils.LoadTexture2d("../res/images/uv.png");
+	engine::graphic::GeTexture2d texture = demoUtils.LoadTexture2d("../res/images/uv.png");
 
 	gApi.SetMaterialParameterTex2d(material, "param", texture);
 

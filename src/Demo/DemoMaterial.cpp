@@ -25,17 +25,17 @@ void DemoMaterial::SetScene()  {
 	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("../res/images/skybox.png");
 
 	engine::graphic::MaterialInstance * material1 = gApi.CreateMaterialInstance(m_diffuseMaterial);
-	engine::graphic::Texture2d * texture1 = demoUtils.LoadTexture2d("../res/images/uv.png");
+	//engine::graphic::GeTexture2d texture1 = demoUtils.LoadTexture2d("../res/images/uv.png");
 
 	engine::graphic::MaterialInstance * material2 = gApi.CreateMaterialInstance(m_diffuseMaterial);
-	engine::graphic::Texture2d * texture2 = demoUtils.LoadTexture2d("../res/images/grass.png");
+	engine::graphic::GeTexture2d grassTexture = demoUtils.LoadTexture2d("../res/images/grass.png");
 
-	gApi.SetMaterialParameterTex2d(material1, "param", texture1);
-	gApi.SetMaterialParameterTex2d(material1, "albedo", texture1);
+	//gApi.SetMaterialParameterTex2d(material1, "param", texture1);
+	gApi.SetMaterialParameterTex2d(material2, "albedo", grassTexture);
 
 	
-	gApi.SetMaterialParameterTex2d(material2, "param", texture2);
-	gApi.SetMaterialParameterTex2d(material2, "albedo", texture2);
+	//gApi.SetMaterialParameterTex2d(material2, "param", texture2);
+	//gApi.SetMaterialParameterTex2d(material2, "albedo", texture2);
 
 	mesh1 = gApi.CreateMesh(rawMeshSphere);
 	mesh2 = gApi.CreateMesh(rawMeshPlane);
@@ -54,8 +54,8 @@ void DemoMaterial::SetScene()  {
 
 	gApi.SetSceneSkybox(m_scene, skybox);
 
-	//gApi.AddSceneMesh(m_scene, mesh1);
-	//gApi.AddSceneMesh(m_scene, mesh2);
+	gApi.AddSceneMesh(m_scene, mesh1);
+	gApi.AddSceneMesh(m_scene, mesh2);
 
 	gApi.AddScenePointLight(m_scene, light);
 }

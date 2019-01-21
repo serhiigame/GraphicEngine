@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IResource.h"
+#include "EGApiEnums.h"
 
 #include "Math.h"
 //#include <stdint.h>
@@ -19,9 +19,8 @@ namespace engine
 		};
 		
 		class IConstant;
-		class Texture2d;
 		
-		class IShaderInput : public IResource
+		class IShaderInput
 		{
 		public:
 			IShaderInput(EShaderInputType type) : m_type(type) {}
@@ -52,11 +51,12 @@ namespace engine
 			friend class Shader;
 		public:
 			ShaderInputTexture2d() : IShaderInput(EShaderInputType::TEXTURE_2D) {}
-			const Texture2d * GetTexture() const {
-				return m_texture;
-			}
+
+			GeTexture2d GetTexture() const;
+			void SetTexture(const GeTexture2d & texture);
+
 		private:
-			Texture2d * m_texture;
+			GeTexture2d m_texture;
 		};
 	}
 }
