@@ -2,8 +2,11 @@
 
 #include "Mesh.h"
 #include "Camera.h"
+#include "Material.h"
 
 #include "Texture2d.h"
+
+#include "Shader.h"
 
 namespace engine
 {
@@ -37,6 +40,14 @@ namespace engine
 		{
 			return m_meshes.at(geMesh);
 		}
+		GeMaterial ResourceManager::CreateMaterial()
+		{
+			return createGeObject(m_materialStorages, GenerateId());
+		}
+		MaterialObject * ResourceManager::GetMaterial(const GeMaterial & geMaterial)
+		{
+			return m_materialStorages.at(geMaterial);
+		}
 		GeCamera ResourceManager::CreateCamera()
 		{
 			return createGeObject(m_cameras, GenerateId());
@@ -52,6 +63,14 @@ namespace engine
 		Texture2d * ResourceManager::GetTexture2d(const GeTexture2d & geTexture2d)
 		{
 			return m_textures2d.at(geTexture2d);
+		}
+		GeShader ResourceManager::CreateShader()
+		{
+			return  createGeObject(m_shaders, GenerateId());
+		}
+		Shader * ResourceManager::GetShader(const GeShader & geShader)
+		{
+			return m_shaders.at(geShader);
 		}
 	}
 }

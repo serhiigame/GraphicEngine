@@ -16,20 +16,22 @@ namespace engine
 		};
 
 
-		enum class EGeSceneObjectType
+		enum class EGeObjectType
 		{
 			NONE = 0
 			, MESH = 1
 			, CAMERA
 			, MATERIAL
+			, MATERIAL_INSTANCE
 			, TEXTURE_2D
+			, SHADER
 		};
 
 
-		class SceneObjectHandler
+		class GeObjectHandler
 		{
 		public:
-			SceneObjectHandler(EGeSceneObjectType type) : m_objectType(type), m_id(-1) {}
+			GeObjectHandler(EGeObjectType type) : m_objectType(type), m_id(-1) {}
 
 			uint64_t GetId() const { return m_id; };
 
@@ -37,13 +39,13 @@ namespace engine
 
 			bool IsValid() const { return m_id != -1; }
 
-			EGeSceneObjectType GetType() { return m_objectType; };
+			GeObjectHandler GetType() { return m_objectType; };
 
-			bool operator<(const SceneObjectHandler & rv) const {
+			bool operator<(const GeObjectHandler & rv) const {
 				return this->GetId() < rv.GetId();
 			}
 		
-			SceneObjectHandler & operator=(const SceneObjectHandler & rv)
+			GeObjectHandler & operator=(const GeObjectHandler & rv)
 			{
 				this->m_id = rv.m_id;
 				this->m_objectType = rv.m_objectType;
@@ -51,25 +53,41 @@ namespace engine
 				return * this;
 			}
 
+			bool operator==(const GeObjectHandler & rv) const
+			{
+				return this->m_id == rv.m_id;
+			}
+
 		protected:
-			EGeSceneObjectType m_objectType;
+			EGeObjectType m_objectType;
 			uint64_t m_id;
 		};
 
 
-		class GeMesh : public SceneObjectHandler {
+		class GeMesh : public GeObjectHandler {
 		public:
-			GeMesh() : SceneObjectHandler(EGeSceneObjectType::MESH) {}
+			GeMesh() : GeObjectHandler(EGeObjectType::MESH) {}
 		};
 
-		class GeCamera : public SceneObjectHandler {
+		class GeMaterial : public GeObjectHandler {
 		public:
-			GeCamera() : SceneObjectHandler(EGeSceneObjectType::CAMERA) {}
+			GeMaterial() : GeObjectHandler(EGeObjectType::MATERIAL) {}
 		};
 
-		class GeTexture2d : public SceneObjectHandler {
+		class GeCamera : public GeObjectHandler {
 		public:
-			GeTexture2d() : SceneObjectHandler(EGeSceneObjectType::TEXTURE_2D) {}
+			GeCamera() : GeObjectHandler(EGeObjectType::CAMERA) {}
+		};
+
+		class GeTexture2d : public GeObjectHandler {
+		public:
+			GeTexture2d() : GeObjectHandler(EGeObjectType::TEXTURE_2D) {}
+		};
+
+		class GeShader : public GeObjectHandler
+		{
+		public:
+			GeShader() : GeObjectHandler(EGeObjectType::SHADER) {}
 		};
 	}
 }

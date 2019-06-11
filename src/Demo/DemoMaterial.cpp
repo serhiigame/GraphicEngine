@@ -15,7 +15,7 @@ void DemoMaterial::SetScene()  {
 	planeTransform.SetRotation(gte::EulerAngles<float>(0, 1, 2, 0.f, M_PI_2, M_PI_2));
 	sphereTransform.SetTranslation(engine::Vec4f({ 0.f, 0.2f, 0.f, 1.f }));
 
-	RegisterMaterials();
+	//RegisterMaterials();
 
 	SetCameraDistance(0.9f);
 
@@ -35,7 +35,7 @@ void DemoMaterial::SetScene()  {
 
 	
 	//gApi.SetMaterialParameterTex2d(material2, "param", texture2);
-	//gApi.SetMaterialParameterTex2d(material2, "albedo", texture2);
+	gApi.SetMaterialParameterTex2d(material2, "albedo", grassTexture);
 
 	mesh1 = gApi.CreateMesh(rawMeshSphere);
 	mesh2 = gApi.CreateMesh(rawMeshPlane);
@@ -55,7 +55,7 @@ void DemoMaterial::SetScene()  {
 	gApi.SetSceneSkybox(m_scene, skybox);
 
 	gApi.AddSceneMesh(m_scene, mesh1);
-	gApi.AddSceneMesh(m_scene, mesh2);
+	//gApi.AddSceneMesh(m_scene, mesh2);
 
 	gApi.AddScenePointLight(m_scene, light);
 }

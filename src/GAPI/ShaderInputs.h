@@ -58,5 +58,40 @@ namespace engine
 		private:
 			GeTexture2d m_texture;
 		};
+
+		struct ShaderInputInfoBase
+		{
+			ShaderInputInfoBase(EShaderInputType type) : Type(type) {}
+			std::string Name;
+			EShaderInputType Type;
+			int Binding;
+		};
+
+		struct ShaderInputTexture2dInfo final : ShaderInputInfoBase
+		{
+			ShaderInputTexture2dInfo() : ShaderInputInfoBase(EShaderInputType::TEXTURE_2D) {}
+			GeTexture2d FallbackTexture;
+		};
+
+
+		struct ShaderInputVec4fInfo final : ShaderInputInfoBase
+		{
+			ShaderInputVec4fInfo() : ShaderInputInfoBase(EShaderInputType::CONSTANT) {}
+
+			float FallbackVec4f[4] = {};
+		};
+
+
+		//TODO
+		//struct ShaderInputCustomeInfo final : ShaderInputInfoBase
+		//{
+		//};
+
+		struct ShaderOutputInfo
+		{
+			std::string Name;
+			int Binding;
+			GeTexture2d OutputTexture;
+		};
 	}
 }

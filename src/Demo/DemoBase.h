@@ -215,7 +215,7 @@ protected:
 
 	engine::graphic::Scene * m_scene;
 
-	engine::graphic::MaterialHandler m_diffuseMaterial;
+	engine::graphic::GeMaterial m_diffuseMaterial;
 
 	void SetCameraDistance(const float & distance)
 	{
