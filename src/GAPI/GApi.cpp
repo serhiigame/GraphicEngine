@@ -859,39 +859,14 @@ namespace engine
 			//XXX: fix me
 			IShaderInput * FindShaderInput(MaterialInstance * material, const std::string & paramName)
 			{
-				/*{
-					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialLightingObject()->GetMaterilShaderDesc().Inputs;
 
-					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
-
-					if (findedMatDesc != descriptions.end())
+				for (auto & input : material->GetMaterialInputs())
+				{
+					if (input.ShaderInputInfo->Name == paramName)
 					{
-						auto materialInputs = material->m_materialLightingInputs;
-						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-						if (findedShaderInput != materialInputs.end())
-						{
-							return findedShaderInput->second;
-						}
+						return input.ShaderInput;
 					}
 				}
-				{
-					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialGbufferObject()->GetMaterilShaderDesc().Inputs;
-
-					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
-
-					if (findedMatDesc != descriptions.end())
-					{
-						auto materialInputs = material->m_materialGbufferInputs;
-						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-						if (findedShaderInput != materialInputs.end())
-						{
-							return findedShaderInput->second;
-						}
-					}
-				}*/
-				
 
 				return nullptr;
 			}
