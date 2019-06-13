@@ -157,7 +157,11 @@ namespace engine
 				Llr::DeleteLlr(m_llr);
 			}
 
-			void BindMesh(const Mesh * mesh) {
+			void BindMesh(const GeMesh geMesh) {
+
+
+				const Mesh * mesh = m_resourceManager.GetMesh(geMesh);
+
 				Shader * gShader = m_resourceManager.GetShader(m_gBuffRenderStage.Shader);
 				
 				gShader->m_shader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
@@ -506,6 +510,8 @@ namespace engine
 						//TODO: use default
 						continue;
 					}
+
+					BindMesh(mesh);
 
 					for (auto gbuffInput : m_materialManager.GetGbufferInputs(materialInstance))
 					{

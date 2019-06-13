@@ -30,11 +30,9 @@ void DemoMaterial::SetScene()  {
 	engine::graphic::MaterialInstance * material2 = gApi.CreateMaterialInstance(m_diffuseMaterial);
 	engine::graphic::GeTexture2d grassTexture = demoUtils.LoadTexture2d("../res/images/grass.png");
 
-	//gApi.SetMaterialParameterTex2d(material1, "param", texture1);
 	gApi.SetMaterialParameterTex2d(material2, "albedo", grassTexture);
 
 	
-	//gApi.SetMaterialParameterTex2d(material2, "param", texture2);
 	gApi.SetMaterialParameterTex2d(material2, "albedo", grassTexture);
 
 	mesh1 = gApi.CreateMesh(rawMeshSphere);
