@@ -19,23 +19,23 @@ void DemoBase::RegisterMaterials()
 {
 	DemoUtils demoUtils(&gApi);
 
-	engine::graphic::ShaderDesc GbuffShaderInfo;
+	engine::graphic::ShaderInfo GbuffShaderInfo;
 	GbuffShaderInfo.vertShaderPath = "../res/shaders/GBuffer.vrt";
 	GbuffShaderInfo.fragShaderPath = "../res/shaders/GBuffer.pxl";
 	
-	engine::graphic::ShaderOutputDesc gBuffOutputColor;
+	engine::graphic::ShaderOutputInfo gBuffOutputColor;
 	gBuffOutputColor.Binding = GBufferOutputBinding::Albedo;
 	gBuffOutputColor.Name = "g_albedo";
 	
-	engine::graphic::ShaderOutputDesc gBuffOutputPos;
+	engine::graphic::ShaderOutputInfo gBuffOutputPos;
 	gBuffOutputPos.Binding = GBufferOutputBinding::Position;
 	gBuffOutputPos.Name = "g_position";
 
-	engine::graphic::ShaderOutputDesc gBuffOutputNormal;
+	engine::graphic::ShaderOutputInfo gBuffOutputNormal;
 	gBuffOutputNormal.Binding = GBufferOutputBinding::Normal;
 	gBuffOutputNormal.Name = "g_normal";
 
-	engine::graphic::ShaderOutputDesc gBuffOutputUv;
+	engine::graphic::ShaderOutputInfo gBuffOutputUv;
 	gBuffOutputUv.Binding = GBufferOutputBinding::Uv;
 	gBuffOutputUv.Name = "g_uv";
 
@@ -45,7 +45,7 @@ void DemoBase::RegisterMaterials()
 	GbuffShaderInfo.Outputs.push_back(gBuffOutputUv);
 
 	engine::graphic::GeTexture2d albedoFallback = demoUtils.LoadTexture2d("../res/images/uv.png");
-	engine::graphic::ShaderInputDesc gBuffInputAlbedo = engine::graphic::MaterialHelper::MakeShaderTextureInputDesc(
+	engine::graphic::ShaderInputInfoBase * gBuffInputAlbedo = engine::graphic::MaterialManager::MakeShaderTextureInputDesc(
 		"albedo"
 		, GBufferInputBinding::Albedo
 		, albedoFallback);
@@ -57,7 +57,7 @@ void DemoBase::RegisterMaterials()
 
 	gApi.CreateGbuffer(GbuffShaderInfo);
 
-	engine::graphic::ShaderDesc ShaderInfo;
+	engine::graphic::ShaderInfo ShaderInfo;
 	ShaderInfo.vertShaderPath = "../res/shaders/Diffuse.vrt";
 	ShaderInfo.fragShaderPath = "../res/shaders/Diffuse.pxl";
 

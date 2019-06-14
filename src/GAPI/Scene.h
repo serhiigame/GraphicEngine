@@ -30,11 +30,11 @@ namespace engine
 
 			const std::set<GeMesh > & GetMeshes() { return m_meshes; }
 
-			void AddMaterialInstance(MaterialInstance * materialInstance) { m_materialInstances.push_back(materialInstance); }
+			//void AddMaterialInstance(MaterialInstance * materialInstance) { m_materialInstances.push_back(materialInstance); }
 
-			void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * materialInstance) { m_materialInstanceMeshRelationship.emplace(materialInstance, mesh); }
+			//void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * materialInstance) { m_materialInstanceMeshRelationship.emplace(materialInstance, mesh); }
 
-			const std::multimap< MaterialInstance *, GeMesh> GetMeshMaterialRelationship() const { return m_materialInstanceMeshRelationship; }
+			//const std::multimap< MaterialInstance *, GeMesh> GetMeshMaterialRelationship() const { return m_materialInstanceMeshRelationship; }
 
 			void AddPointLight(PointLight * mesh);
 
@@ -47,8 +47,8 @@ namespace engine
 		protected:
 			std::set<GeMesh> m_meshes;
 
-			std::vector< MaterialInstance *> m_materialInstances;
-			std::multimap< MaterialInstance *, GeMesh> m_materialInstanceMeshRelationship;
+			//std::vector< MaterialInstance *> m_materialInstances;
+			//std::multimap< MaterialInstance *, GeMesh> m_materialInstanceMeshRelationship;
 
 			std::vector< PointLight *> m_pointLights;
 			TextureCubeMap * m_skybox = nullptr;

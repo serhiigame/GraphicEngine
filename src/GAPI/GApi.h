@@ -16,8 +16,8 @@ namespace engine
 	
 		class Scene;
 
-		class ShaderDesc;
-		class MaterialHandler;
+		class ShaderInfo;
+		class MaterialObject;
 		class MaterialInstance;
 		
 		class TextureCubeMap;
@@ -80,13 +80,13 @@ namespace engine
 			void DeleteMesh(GeMesh mesh);
 
 			GAPI_EXPORT
-			bool CreateGbuffer(ShaderDesc & shaderDesc);
+			bool CreateGbuffer(ShaderInfo & shaderDesc);
 
 			GAPI_EXPORT
-			MaterialHandler CreateMaterial(ShaderDesc & shaderDesc);
+			GeMaterial CreateMaterial(ShaderInfo & shaderDesc);
 
 			GAPI_EXPORT
-			MaterialInstance * CreateMaterialInstance(MaterialHandler & handler);
+			MaterialInstance * CreateMaterialInstance(const GeMaterial & material);
 
 			GAPI_EXPORT
 			void SetMaterialParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param);
@@ -123,6 +123,9 @@ namespace engine
 
 			GAPI_EXPORT
 			void AddScenePointLight(Scene * scene, PointLight * mesh);
+
+			GAPI_EXPORT
+			GeShader CreateShader(const std::string & vert, const std::string & frag);
 
 			GAPI_EXPORT
 			ERenderStatus Render(Scene * scene, ERenderMode mode = ERenderMode::DRAW_ALL);

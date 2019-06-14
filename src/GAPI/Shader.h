@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IResource.h"
+#include "ShaderInputs.h"
 
 namespace engine
 {
@@ -9,8 +9,18 @@ namespace engine
 		class IShader;
 		
 		class IShaderInput;
+		class ShaderInputInfoBase;
 
-		class Shader : public IResource
+		struct ShaderInfo
+		{
+			std::string vertShaderPath;
+			std::string fragShaderPath;
+
+			std::vector<ShaderInputInfoBase *> Inputs;
+			std::vector<ShaderOutputInfo> Outputs;
+		};
+
+		class Shader
 		{
 			friend class GApi;
 			friend class GApiImpl;

@@ -63,7 +63,7 @@ namespace engine
 		struct RenderStage
 		{
 			IRenderPass * RenderPass;
-			IShader * Shader;
+			GeShader Shader;
 
 			std::vector<RanderStageShaderInputs> ShaderInputs;
 			RanderStageShaderOutputs ShaderOutputs;
@@ -157,18 +157,22 @@ namespace engine
 				Llr::DeleteLlr(m_llr);
 			}
 
-			void BindMesh(const Mesh * mesh) {
-				IShader * gShader = m_gBuffRenderStage.Shader;
+			void BindMesh(const GeMesh geMesh) {
 
-				gShader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
-				gShader->AttachAttribute(mesh->m_norm, globalBufferAttchment::Normal, 0, 3, EDataType::FLOAT);
-				gShader->AttachAttribute(mesh->m_uv, globalBufferAttchment::Uv, 0, 2, EDataType::FLOAT);
+
+				const Mesh * mesh = m_resourceManager.GetMesh(geMesh);
+
+				Shader * gShader = m_resourceManager.GetShader(m_gBuffRenderStage.Shader);
+				
+				gShader->m_shader->AttachAttribute(mesh->m_pos, globalBufferAttchment::Position, 0, 3, EDataType::FLOAT);
+				gShader->m_shader->AttachAttribute(mesh->m_norm, globalBufferAttchment::Normal, 0, 3, EDataType::FLOAT);
+				gShader->m_shader->AttachAttribute(mesh->m_uv, globalBufferAttchment::Uv, 0, 2, EDataType::FLOAT);
 
 				IBuffer * idx = mesh->m_idx;
 				size_t count = idx->GetSize() / sizeof(unsigned int);
-				gShader->AttachAttribute(idx, 0, 0, count, EDataType::UNSIGNED_INT);
+				gShader->m_shader->AttachAttribute(idx, 0, 0, count, EDataType::UNSIGNED_INT);
 
-				gShader->AttachConstant(mesh->m_transform, globalConstAttchment::Transformation);
+				gShader->m_shader->AttachConstant(mesh->m_transform, globalConstAttchment::Transformation);
 			}
 
 			Scene * CreareScene()
@@ -196,7 +200,7 @@ namespace engine
 				
 
 
-				m_resources.insert(mesh);
+				//m_resources.insert(mesh);
 
 				mesh->m_pos = m_llr->CreateBuffer(sizeof(meshData.Positions[0]) * meshData.Positions.size());
 				mesh->m_norm = m_llr->CreateBuffer(sizeof(meshData.Normals[0]) * meshData.Normals.size());
@@ -231,18 +235,21 @@ namespace engine
 
 			void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * materialInstance)
 			{
-				m_scene->SetMeshMaterialInstance(mesh, materialInstance);
+				m_materialManager.SetMeshMaterialInstance(mesh, materialInstance);
+				//m_scene->SetMeshMaterialInstance(mesh, materialInstance);
 			}
 
-			bool CreateGbuffer(ShaderDesc & shaderInfo)
+			bool CreateGbuffer(ShaderInfo & shaderInfo)
 			{
-
-				Shader * shader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
-				if (!shader->IsValid())
+				GeShader geShader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
+				if (!geShader.IsValid())
 				{
 					return false;
 				}
 
+				Shader * shader = m_resourceManager.GetShader(geShader);
+
+				
 				RanderStageShaderInputs shaderInputs;
 				RanderStageShaderOutputs shaderOutputs;
 
@@ -252,77 +259,83 @@ namespace engine
 					shaderOutputs.Texture2dInputs.emplace(output.Binding, texture);
 				}
 
-				m_materialGbufferObject.m_shaderDesc = shaderInfo;
+				//m_materialGbufferObject.m_shaderDesc = shaderInfo;
 
-				m_gBuffRenderStage = CreateGbufferRenderStege(shader->m_shader, shaderInputs, shaderOutputs, m_gBufferFb);
+				m_gBuffRenderStage = CreateGbufferRenderStege(geShader, shaderInputs, shaderOutputs, m_gBufferFb);
+
+				m_materialManager.RegisterGbuffer(geShader, shaderInfo);
+
+				return true;
 			}
 
-			MaterialHandler CreateMaterial(ShaderDesc & shaderInfo)
+			GeMaterial CreateMaterial(ShaderInfo & shaderInfo)
 			{
 				//TODO: GenMaterialId
 				int materialId = m_materialIdCounter++;
 
-				Shader * shader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
-
-				if (!shader)
+				GeShader geShader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
+				if (!geShader.IsValid())
 				{
-					return MaterialHandler();
+					return GeMaterial();
 				}
 
-				MaterialObject materialObject;
-				materialObject.SetMaterilId(materialId);
+				Shader * shader = m_resourceManager.GetShader(geShader);
 
-				materialObject.SetMaterialShaderDesc( shaderInfo );
-				materialObject.SetMaterialShader( shader );
+
+				GeMaterial geMaterial = m_resourceManager.CreateMaterial();
+				MaterialObject * material = m_resourceManager.GetMaterial(geMaterial);
+
+				material->SetMaterilId(materialId);
+
+				material->SetMaterialShaderDesc( shaderInfo );
+				material->SetMaterialShader( shader );
 
 				RanderStageShaderInputs globalShaderInputs;
 
 				globalShaderInputs.Texture2dInputs = m_gBuffRenderStage.ShaderOutputs.Texture2dInputs;
 
-				RenderStage renderStage = CreateLightRenderStege(shader->m_shader, globalShaderInputs, m_acumuFb);
+				RenderStage renderStage = CreateLightRenderStege(geShader, globalShaderInputs, m_acumuFb);
 
 				m_lightRenderStages.push_back(renderStage);
 
-				m_materialLightingObjects.push_back(materialObject);
+				m_materialManager.RegistreMaterial(geMaterial);
 
-				MaterialHandler materialHandler;
-				materialHandler.m_materialId = materialId;
-
-				return materialHandler;
+				return geMaterial;
 			}
 
-			MaterialInstance * CreateMaterialInstance(MaterialHandler & handler)
+			MaterialInstance * CreateMaterialInstance( const GeMaterial & geMaterial)
 			{
-				int materialId = handler.GetMaterialId();
-				
-				auto materialLightingObject = std::find_if(m_materialLightingObjects.begin(), m_materialLightingObjects.end(), [materialId](MaterialObject & mo) {return materialId == mo.GetMaterilId(); });
-
-				if (materialLightingObject == m_materialLightingObjects.end())
-				{
-					return nullptr;
-				}
 	
-				MaterialInstance * materialInstance = new MaterialInstance(&m_materialGbufferObject, &materialLightingObject[0]);
+				//MaterialInstance * materialInstance = new MaterialInstance(&m_materialGbufferObject, &materialLightingObject[0]);
+				MaterialObject * material = m_resourceManager.GetMaterial(geMaterial);
+				MaterialInstance * materialInstance = new MaterialInstance(material);
 
-				for (auto inpudDesc : m_materialGbufferObject.GetMaterilShaderDesc().Inputs)
+				for (auto inpudDesc : m_materialManager.GetGbufferShaderInfo().Inputs)
 				{
-					if (inpudDesc.Type == EMaterialInputType::TEXTURE)
+					if (inpudDesc->Type == EShaderInputType::TEXTURE_2D)
 					{
-						ShaderInputTexture2d * shaderTextureInput = new ShaderInputTexture2d;
-						shaderTextureInput->SetTexture(((ShaderInputTexture2d *)inpudDesc.Fallback)->GetTexture());
+						ShaderInputTexture2d * shaderTexture2dInput = new ShaderInputTexture2d;
+						ShaderInputTexture2dInfo * shaderTexture2dInputInfo = (ShaderInputTexture2dInfo *)inpudDesc;
+						shaderTexture2dInput->SetTexture(shaderTexture2dInputInfo->FallbackTexture);
 
-						materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = shaderTextureInput;
+						//m_materialManager.
+
+						materialInstance->AddMaterialInput(shaderTexture2dInput, shaderTexture2dInputInfo);
+
+						//materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = shaderTexture2dInput;
 					}
 					
 					
 					//materialInstance->m_materialGbufferInputs[inpudDesc.Binding] = inpudDesc.Fallback;
 				}
 
-				for (auto inpudDesc : materialLightingObject->GetMaterilShaderDesc().Inputs)
-				{
-					materialInstance->m_materialLightingInputs[inpudDesc.Binding] = inpudDesc.Fallback;
-				}
+				//for (auto inpudDesc : materialLightingObject->GetMaterilShaderDesc().Inputs)
+				//{
+					//materialInstance->m_materialLightingInputs[inpudDesc.Binding] = inpudDesc.Fallback;
+				//}
 
+
+				m_materialManager.RegistreMaterialInstance(geMaterial, materialInstance);
 				//TODO: use material instance handlers
 				return materialInstance;
 			}
@@ -424,18 +437,19 @@ namespace engine
 				texture->WriteImage(xOffset, yOffset, w, h, data);
 			}
 
-			Shader * CreateShader(std::string vert, std::string frag)
+			GeShader CreateShader(const std::string & vert, const std::string & frag)
 			{
-				Shader * shader = new Shader;
+				GeShader geShader = m_resourceManager.CreateShader();
+				Shader * shader = m_resourceManager.GetShader(geShader);
 				shader->m_shader = m_llr->CreateShader(vert, frag);
-				m_resources.insert(shader);
-				return shader;
+
+				return geShader;
 			}
 
 			void DeleteShader(Shader * shader)
 			{
-				m_resources.erase(shader);
-				delete shader;
+				//m_resources.erase(shader);
+				//delete shader;
 			}
 
 			TextureCubeMap * CreateTextureCubeMap(size_t size)
@@ -481,13 +495,56 @@ namespace engine
 			//void RenderGeometry(const std::vector<GeMesh> meshes, const Camera * camera)
 			void RenderGeometry(Scene * scene)
 			{
-				IShader * shader = m_gBuffRenderStage.Shader;
+				Shader * shader = m_resourceManager.GetShader(m_gBuffRenderStage.Shader);
 				GeCamera geCamera = scene->GetCamera();
 				const Camera * camera = m_resourceManager.GetCamera(geCamera);
 
 
-				shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
-				for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
+				shader->m_shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
+
+				for (auto mesh : scene->GetMeshes())
+				{
+					MaterialInstance * materialInstance = m_materialManager.GetMeshMaterialInstance(mesh);
+					if (!materialInstance)
+					{
+						//TODO: use default
+						continue;
+					}
+
+					BindMesh(mesh);
+
+					for (auto gbuffInput : m_materialManager.GetGbufferInputs(materialInstance))
+					{
+						int binding = gbuffInput.first;
+						IShaderInput * shaderInput = gbuffInput.second;
+
+						if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+						{
+							GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
+
+							Texture2d * texture = nullptr;
+							if (geTexture.IsValid())
+							{
+								texture = m_resourceManager.GetTexture2d(geTexture);
+								shader->m_shader->AttachTexture2d(texture->m_texture, binding);
+							}
+							else
+							{
+								//TODO: warning 
+							}
+						}
+					}
+
+					IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
+					IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
+					renderPass->Execute(shader->m_shader, framebuffer);
+				}
+
+
+
+				//GetMeshMaterial
+
+				/*for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
 				{					
 					for (auto mm : scene->GetMeshMaterialRelationship())
 					{
@@ -506,7 +563,7 @@ namespace engine
 
 						BindMesh(mesh);
 
-						for (auto materialInput : materialInstances->m_materialGbufferInputs)
+						/*for (auto materialInput : materialInstances->m_materialGbufferInputs)
 						{
 							int binding = materialInput.first;
 							IShaderInput * shaderInput = materialInput.second;
@@ -527,12 +584,8 @@ namespace engine
 								}
 							}
 						}
-
-						IRenderPass * renderPass = m_gBuffRenderStage.RenderPass;
-						IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
-						renderPass->Execute(shader, framebuffer);
 					}
-				}
+				}*/
 			}
 
 			void RenderLights(const std::vector< PointLight *> & lights, TextureCubeMap * skybox = nullptr)
@@ -540,7 +593,7 @@ namespace engine
 				for (auto lightRenderStage : m_lightRenderStages)
 				{
 					IRenderPass * renderPass = lightRenderStage.RenderPass;
-					IShader * shader = lightRenderStage.Shader;
+					IShader * shader = m_resourceManager.GetShader(lightRenderStage.Shader)->m_shader;
 					IFramebuffer * acumulator = lightRenderStage.OutputFramebuffer;
 
 					if (skybox)
@@ -553,13 +606,16 @@ namespace engine
 						// TODO: set global constant
 						shader->AttachConstant(pointLight->m_pointLight, 1);
 
-						for (auto materialObjectIt : m_materialLightingObjects) {
-							for (auto materialInstances : materialObjectIt.GetMaterialInstances())
+
+						for (auto material : m_materialManager.GetMaterials())
+						{
+							//for (auto materialInstance : material.GetMaterialInstances())
+							for (auto materialInstance : m_materialManager.GetMaterialInstances(material))
 							{
-								for (auto materialInput : materialInstances->m_materialLightingInputs)
+								for (auto lightingInput : m_materialManager.GetGbufferInputs(materialInstance))
 								{
-									int binding = materialInput.first;
-									IShaderInput * shaderInput = materialInput.second;
+									int binding = lightingInput.first;
+									IShaderInput * shaderInput = lightingInput.second;
 
 									if (shaderInput->GetShaderInputType() == EShaderInputType::CONSTANT)
 									{
@@ -576,6 +632,32 @@ namespace engine
 								renderPass->Execute(shader, acumulator);
 							}
 						}
+						//for (auto lightingInput : m_materialManager.GetGbufferInputs(materialInstance))
+						//{
+
+						//for (auto materialObjectIt : m_materialLightingObjects) {
+						//	for (auto materialInstances : materialObjectIt.GetMaterialInstances())
+							//{
+								/*for (auto materialInput : materialInstances->m_materialLightingInputs)
+								{
+									int binding = materialInput.first;
+									IShaderInput * shaderInput = materialInput.second;
+
+									if (shaderInput->GetShaderInputType() == EShaderInputType::CONSTANT)
+									{
+										shader->AttachConstant(((ShaderInputConstant *)shaderInput)->m_constant, binding);
+									}
+									else if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
+									{
+										GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
+										Texture2d * texture = m_resourceManager.GetTexture2d(geTexture);
+										shader->AttachTexture2d(texture->m_texture, binding);
+									}
+								}*/
+
+								//renderPass->Execute(shader, acumulator);
+							//}
+						//}
 					}
 				}
 			}
@@ -585,7 +667,7 @@ namespace engine
 				for (auto pEffectRenderStage : m_pEffectRenderStages)
 				{
 					IRenderPass * renderPass = pEffectRenderStage.RenderPass;
-					IShader * shader = pEffectRenderStage.Shader;
+					IShader * shader = m_resourceManager.GetShader( pEffectRenderStage.Shader)->m_shader;
 					renderPass->Execute(shader);
 				}
 			}
@@ -614,14 +696,14 @@ namespace engine
 			}
 
 			void InitPostEffectsRenderState() {
-				IShader * PEffectShader = m_llr->CreateShader("../res/shaders/BlackWhite.vrt", "../res/shaders/BlackWhite.pxl");
+				GeShader shader = CreateShader("../res/shaders/BlackWhite.vrt", "../res/shaders/BlackWhite.pxl");
 
 				RanderStageShaderInputs globalShaderInputs;
 
 				// TODO: use global
 				globalShaderInputs.Texture2dInputs[0] = m_acumTexture;
 
-				RenderStage renderStage = CreatePEffectRenderStage(PEffectShader
+				RenderStage renderStage = CreatePEffectRenderStage(shader
 					, globalShaderInputs
 					, nullptr);
 
@@ -629,7 +711,7 @@ namespace engine
 			}
 
 
-			RenderStage CreateGbufferRenderStege(IShader * shader
+			RenderStage CreateGbufferRenderStege(const GeShader & geShader
 				, const RanderStageShaderInputs & shaderInputs
 				, const RanderStageShaderOutputs & shaderOutputs
 				, IFramebuffer * output)
@@ -643,7 +725,7 @@ namespace engine
 
 				RenderStage renderStage;
 
-				renderStage.Shader = shader;
+				renderStage.Shader = geShader;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
@@ -665,12 +747,13 @@ namespace engine
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
 				uint32_t rectIndexCount = GetRectIndexCount();
 				EDataType rectIndexType = GetRectIndexType();
-				renderStage.Shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
+				IShader * shader = m_resourceManager.GetShader(renderStage.Shader)->m_shader;
+				shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
 
 				return renderStage;
 			}
 
-			RenderStage CreateLightRenderStege(IShader * shader
+			RenderStage CreateLightRenderStege(GeShader geShader
 				, const RanderStageShaderInputs & globalShaderInputs
 				, IFramebuffer * output)
 			{
@@ -683,17 +766,17 @@ namespace engine
 
 				RenderStage renderStage;
 
-				renderStage.Shader = shader;
+				renderStage.Shader = geShader;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
-
+				IShader * shader = m_resourceManager.GetShader(renderStage.Shader)->m_shader;
 				for (auto texture2dInput : globalShaderInputs.Texture2dInputs)
 				{
 					const uint32_t textureLocation = texture2dInput.first;
 					const ITexture2D * texture = texture2dInput.second;
 
-					renderStage.Shader->AttachTexture2d(texture, textureLocation);
+					shader->AttachTexture2d(texture, textureLocation);
 				}
 
 				for (auto textureCubeMapInput : globalShaderInputs.TextureCubeMapInputs)
@@ -701,36 +784,37 @@ namespace engine
 					const uint32_t textureLocation = textureCubeMapInput.first;
 					const ITextureCubeMap * texture = textureCubeMapInput.second;
 
-					renderStage.Shader->AttachTextureCubeMap(texture, textureLocation);
+					shader->AttachTextureCubeMap(texture, textureLocation);
 				}
 
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
 				uint32_t rectIndexCount = GetRectIndexCount();
 				EDataType rectIndexType = GetRectIndexType();
-				renderStage.Shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
+				shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
 
 				return renderStage;
 			}
 
-			RenderStage CreatePEffectRenderStage(IShader * shader, const RanderStageShaderInputs & inputs, IFramebuffer * output)
+			RenderStage CreatePEffectRenderStage(const GeShader & geShader, const RanderStageShaderInputs & inputs, IFramebuffer * output)
 			{
 				RenderStage renderStage;
 
-				renderStage.Shader = shader;
+				renderStage.Shader = geShader;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
 
+				IShader * shader = m_resourceManager.GetShader(renderStage.Shader)->m_shader;
 				for (auto textureInput : inputs.Texture2dInputs)
 				{
 					const uint32_t textureLocation = textureInput.first;
 					const ITexture2D * texture = textureInput.second;
 
-					renderStage.Shader->AttachTexture2d(texture, textureLocation);
+					shader->AttachTexture2d(texture, textureLocation);
 				}
 
 				IBuffer * rectIndexBuffer = GetRectIndexBuffer();
 				uint32_t rectIndexCount = GetRectIndexCount();
 				EDataType rectIndexType = GetRectIndexType();
-				renderStage.Shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
+				shader->AttachAttribute(rectIndexBuffer, 0, 0, rectIndexCount, rectIndexType);
 
 				return renderStage;
 			}
@@ -775,39 +859,16 @@ namespace engine
 			//XXX: fix me
 			IShaderInput * FindShaderInput(MaterialInstance * material, const std::string & paramName)
 			{
+
+				for (auto & input : material->GetMaterialInputs())
 				{
-					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialLightingObject()->GetMaterilShaderDesc().Inputs;
-
-					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
-
-					if (findedMatDesc != descriptions.end())
+					if (input.ShaderInputInfo->Name == paramName)
 					{
-						auto materialInputs = material->m_materialLightingInputs;
-						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-						if (findedShaderInput != materialInputs.end())
-						{
-							return findedShaderInput->second;
-						}
+						return input.ShaderInput;
 					}
 				}
-				{
-					const std::vector<ShaderInputDesc> & descriptions = material->GetMaterialGbufferObject()->GetMaterilShaderDesc().Inputs;
 
-					auto findedMatDesc = std::find_if(descriptions.begin(), descriptions.end(), [&paramName](const ShaderInputDesc & decs)->bool {return decs.Name == paramName; });
-
-					if (findedMatDesc != descriptions.end())
-					{
-						auto materialInputs = material->m_materialGbufferInputs;
-						auto findedShaderInput = materialInputs.find(findedMatDesc->Binding);
-
-						if (findedShaderInput != materialInputs.end())
-						{
-							return findedShaderInput->second;
-						}
-					}
-				}
-				
+				return nullptr;
 			}
 
 			template<class T>
@@ -873,6 +934,7 @@ namespace engine
 			Llr * m_llr;
 
 			ResourceManager m_resourceManager;
+			MaterialManager m_materialManager;
 
 			Scene * m_scene;
 
@@ -890,8 +952,9 @@ namespace engine
 			std::vector<RenderStage> m_pEffectRenderStages;
 
 			
+			
 
-			MaterialObject m_materialGbufferObject;
+			//MaterialObject m_materialGbufferObject;
 			std::vector<MaterialObject> m_materialLightingObjects;
 
 			std::multimap<int , Mesh *> m_materialIdMeshRelationship;
@@ -936,19 +999,19 @@ namespace engine
 		{
 			m_impl->DeleteMesh(mesh);
 		}
-		bool GApi::CreateGbuffer(ShaderDesc & shaderDesc)
+		bool GApi::CreateGbuffer(ShaderInfo & shaderDesc)
 		{
 			return m_impl->CreateGbuffer(shaderDesc);
 		}
 
-		MaterialHandler GApi::CreateMaterial(ShaderDesc & shaderDesc)
+		GeMaterial GApi::CreateMaterial(ShaderInfo & shaderDesc)
 		{
 			return m_impl->CreateMaterial(shaderDesc);
 		}
 
-		MaterialInstance * GApi::CreateMaterialInstance(MaterialHandler & handler)
+		MaterialInstance * GApi::CreateMaterialInstance(const GeMaterial & material)
 		{
-			return m_impl->CreateMaterialInstance(handler);
+			return m_impl->CreateMaterialInstance(material);
 		}
 
 		void GApi::SetMaterialParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
@@ -1054,6 +1117,11 @@ namespace engine
 		void GApi::AddScenePointLight(Scene * scene, PointLight * pointLight)
 		{
 			scene->AddPointLight(pointLight);
+		}
+
+		GeShader GApi::CreateShader(const std::string & vert, const std::string & frag)
+		{
+			return m_impl->CreateShader(vert, frag);
 		}
 
 		ERenderStatus GApi::Render(Scene * scene, ERenderMode mode)

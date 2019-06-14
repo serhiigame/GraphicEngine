@@ -117,7 +117,7 @@ project "Demo"
 		architecture "x86_64"
 		defines { "DEBUG" }
 		symbols "On"
-		links { "glfw3.lib", "glew32", "opengl32.lib", "GTEngine.v14.lib", "GAPId.lib" }
+		links { "glfw3.lib", "glew32", "opengl32.lib", "GTEngine.v14.lib", "GAPId.lib", "GUd.lib" }
 
    filter "configurations:Release"
 		architecture "x86_64"
