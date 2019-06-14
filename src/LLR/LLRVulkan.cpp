@@ -1,6 +1,6 @@
 #include "LLRVulkan.h"
 
-#define GLFW_INCLUDE_VULKAN
+//#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 //#include <vulkan/vulkan.h>
 
@@ -15,7 +15,7 @@ namespace engine
 {
 	namespace graphic
 	{
-		const std::vector<const char*> validationLayers = {
+		/*const std::vector<const char*> validationLayers = {
 			"VK_LAYER_LUNARG_standard_validation",
 		};
 
@@ -370,21 +370,21 @@ namespace engine
 
 			VkDebugReportCallbackEXT m_debugCallback;
 		};
-
-		LlrVulkan::LlrVulkan() : m_impl(new VulcanImpl) {}
+		*/
+		LlrVulkan::LlrVulkan() /*: m_impl(new VulcanImpl) */{}
 
 		LlrVulkan::~LlrVulkan()
 		{
-			if (m_impl)
+			/*if (m_impl)
 			{
 				delete m_impl;
 				m_impl = nullptr;
-			}
+			}*/
 		}
 
 		void LlrVulkan::Init(IWindow * window)
 		{
-			if (!window)
+			/*if (!window)
 			{
 				return;
 			}
@@ -396,12 +396,12 @@ namespace engine
 			m_impl->PickPhysicalDevice();
 			m_impl->CreateLogicalDevice();
 			m_impl->CreateSwapChain();
-			m_impl->CreateImageViews();
+			m_impl->CreateImageViews();*/
 		}
 
 		IShader * LlrVulkan::CreateShader(const std::string & vertexPath, const std::string & fragmentPass, const std::string & tesselationPass, const std::vector<std::string> define)
 		{
-			auto readFile = [](const std::string path)->std::vector<char>
+			/*auto readFile = [](const std::string path)->std::vector<char>
 			{
 				std::ifstream file(path, std::ios::ate | std::ios::binary);
 
@@ -451,7 +451,9 @@ namespace engine
 			shader->m_vertexShader = vertexShader;
 			shader->m_fragmentShader = fragmentShader;
 
-			return shader;
+			return shader;*/
+
+			return nullptr;
 		}
 
 		IBuffer * LlrVulkan::CreateBuffer(size_t size)

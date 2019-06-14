@@ -21,8 +21,8 @@ namespace engine
 			virtual void AttachTextureCubeMap(const ITextureCubeMap * texture, const int location) {};
 		private:
 
-			VkShaderModule m_vertexShader;
-			VkShaderModule m_fragmentShader;
+			//VkShaderModule m_vertexShader;
+			//VkShaderModule m_fragmentShader;
 
 		};
 	}

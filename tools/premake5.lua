@@ -3,6 +3,30 @@ workspace "GraphicEngine"
 	location "../"
 	configurations { "Debug", "Release" }
 
+
+project "Base"
+	kind "SharedLib"
+	language "C++"
+	location "../prj/"
+	targetdir "../lib/%{cfg.buildcfg}"
+	
+	files { "../src/Base/*.h", "../src/Base/*.cpp" }
+	
+
+	filter "configurations:Debug"
+		targetname "%{prj.name}d"
+		architecture "x86_64"
+		defines { "DEBUG" }
+		symbols "On"
+
+   filter "configurations:Release"
+		architecture "x86_64"
+		defines { "NDEBUG" }
+		optimize "On"
+		
+	configuration "windows"
+		postbuildcommands { " copy /Y \"$(TargetDir)$(TargetFileName)\" \"$(SolutionDir)bin\\%{cfg.buildcfg}\\$(TargetFileName) \""}
+
 project "LLR"
 	kind "SharedLib"
 	language "C++"
