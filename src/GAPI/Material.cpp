@@ -97,6 +97,16 @@ namespace engine
 			m_meshMaterialRelationship.insert_or_assign(mesh, materialInstance);
 		}
 
+		void MaterialManager::SetDefaultMaterialInstance(MaterialInstance * materialInstance)
+		{
+			m_defaultMaterialInstance = materialInstance;
+		}
+
+		MaterialInstance * MaterialManager::GetDefaultMaterialInstance()
+		{
+			return m_defaultMaterialInstance;
+		}
+
 		const ShaderInfo & MaterialManager::GetGbufferShaderInfo() const
 		{
 			return m_gBuffShaderInfo;

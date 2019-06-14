@@ -95,6 +95,9 @@ namespace engine
 			void SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, GeTexture2d texture);
 
 			GAPI_EXPORT
+			void SetDefaultMaterialInstance(MaterialInstance * material);
+
+			GAPI_EXPORT
 			void SetCameraView(GeCamera camera, const Mat4f & view);
 
 			GAPI_EXPORT

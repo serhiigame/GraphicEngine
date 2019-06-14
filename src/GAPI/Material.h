@@ -174,6 +174,10 @@ namespace engine
 
 			void SetMeshMaterialInstance(GeMesh mesh, MaterialInstance * materialInstance);
 
+			void SetDefaultMaterialInstance(MaterialInstance * materialInstance);
+
+			MaterialInstance * GetDefaultMaterialInstance();
+
 			const ShaderInfo & GetGbufferShaderInfo() const;
 
 			std::set<GeMaterial> GetMaterials() const;
@@ -194,6 +198,7 @@ namespace engine
 			std::multimap<GeMaterial, MaterialInstance *> m_materialInstances;
 
 			std::map<GeMesh, MaterialInstance *> m_meshMaterialRelationship;
+			MaterialInstance * m_defaultMaterialInstance = nullptr;
 		};
 
 		//class MaterialHelper final

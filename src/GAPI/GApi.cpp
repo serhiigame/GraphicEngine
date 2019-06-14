@@ -340,6 +340,11 @@ namespace engine
 				return materialInstance;
 			}
 
+			void SetDefaultMaterialInstance(MaterialInstance * material)
+			{
+				m_materialManager.SetDefaultMaterialInstance(material);
+			}
+
 			void SetMaterialInstanceParameterF4(MaterialInstance * material, const std::string & paramName, const Vec4f & param)
 			{
 				IShaderInput * shaderInput = FindShaderInput(material, paramName);
@@ -507,8 +512,12 @@ namespace engine
 					MaterialInstance * materialInstance = m_materialManager.GetMeshMaterialInstance(mesh);
 					if (!materialInstance)
 					{
-						//TODO: use default
-						continue;
+						materialInstance = m_materialManager.GetDefaultMaterialInstance();
+
+						if (!materialInstance)
+						{
+							continue;
+						}
 					}
 
 					BindMesh(mesh);
@@ -1022,6 +1031,11 @@ namespace engine
 		void GApi::SetMaterialParameterTex2d(MaterialInstance * material, const std::string & paramName, GeTexture2d texture)
 		{
 			m_impl->SetMaterialInstanceParameterTex2d(material, paramName, texture);
+		}
+
+		void GApi::SetDefaultMaterialInstance(MaterialInstance * material)
+		{
+			m_impl->SetDefaultMaterialInstance(material);
 		}
 
 		GeCamera GApi::CreateCamera()

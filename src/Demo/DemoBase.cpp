@@ -44,14 +44,11 @@ void DemoBase::RegisterMaterials()
 	GbuffShaderInfo.Outputs.push_back(gBuffOutputNormal);
 	GbuffShaderInfo.Outputs.push_back(gBuffOutputUv);
 
-	engine::graphic::GeTexture2d albedoFallback = demoUtils.LoadTexture2d("../res/images/uv.png");
+	engine::graphic::GeTexture2d albedoFallback = demoUtils.LoadTexture2d("../res/images/gray.png");
 	engine::graphic::ShaderInputInfoBase * gBuffInputAlbedo = engine::graphic::MaterialManager::MakeShaderTextureInputDesc(
 		"albedo"
 		, GBufferInputBinding::Albedo
 		, albedoFallback);
-	//gBuffInputAlbedo.Type = engine::graphic::EMaterialInputType::TEXTURE;
-	//gBuffInputAlbedo.Binding = GBufferInputBinding::Albedo;
-	//gBuffInputAlbedo.Name = "albedo";
 
 	GbuffShaderInfo.Inputs.push_back(gBuffInputAlbedo);
 
@@ -61,12 +58,9 @@ void DemoBase::RegisterMaterials()
 	ShaderInfo.vertShaderPath = "../res/shaders/Diffuse.vrt";
 	ShaderInfo.fragShaderPath = "../res/shaders/Diffuse.pxl";
 
-	//engine::graphic::ShaderInputDesc imputDesk;
-	//imputDesk.Binding = 11;
-	//imputDesk.Type = engine::graphic::EMaterialInputType::TEXTURE;
-	//imputDesk.Name = "param";
-
-	//ShaderInfo.Inputs.push_back(imputDesk);
-
 	m_diffuseMaterial = gApi.CreateMaterial(ShaderInfo);
+
+	engine::graphic::MaterialInstance * materialInstance = gApi.CreateMaterialInstance(m_diffuseMaterial);
+	gApi.SetDefaultMaterialInstance(materialInstance);
+
 }
