@@ -18,19 +18,7 @@ namespace engine
 		class Shader;
 		class ShaderInfo;
 		class ShaderInputInfoBase;
-		class Mesh;
-
-		enum class EMaterialInputType
-		{
-			NONE = -1
-			, TEXTURE = 1
-			, VEC4F
-			//, INT
-			//, FLOAT
-			//, COLOR
-		};
-
-		
+		class Mesh;	
 
 		class MaterialHandler
 		{
@@ -45,7 +33,7 @@ namespace engine
 
 		struct MaterialInput
 		{
-			ShaderInputInfoBase * ShaderInputInfo;
+			ShaderInputInfoBasePtr ShaderInputInfo;
 			IShaderInput * ShaderInput;
 		};
 
@@ -127,7 +115,7 @@ namespace engine
 			//MaterialObject * GetMaterialGbufferObject() { return m_pMaterialGbufferObject; }
 			MaterialObject * GetMaterial() { return m_pMaterial; }
 
-			void AddMaterialInput(IShaderInput * shaderInput, ShaderInputInfoBase * shaderInputInfo);
+			void AddMaterialInput(IShaderInput * shaderInput, ShaderInputInfoBasePtr shaderInputInfo);
 
 			const std::vector<MaterialInput> & GetMaterialInputs();
 
@@ -163,10 +151,15 @@ namespace engine
 		{
 		public:
 			GAPI_EXPORT
-			static ShaderInputInfoBase * MakeShaderTextureInputDesc(const std::string & Name, const int Binding, const GeTexture2d & fallback);
+			static ShaderInputInfoBasePtr MakeShaderTexture2dInputDesc(const std::string & Name, const int Binding, const GeTexture2d & fallback);
+
+			GAPI_EXPORT
+			static ShaderInputInfoBasePtr MakeShaderTextureCubeMapInputDesc(const std::string & Name, const int Binding, const GeTextureCubeMap & fallback);
 
 		public:
 			void RegisterGbuffer(const GeShader & shader, const ShaderInfo & shaderInfo);
+
+			void RegisterEnvMap(const GeShader & shader, const ShaderInfo & shaderInfo);
 
 			void RegistreMaterial(const GeMaterial & material);
 
@@ -186,6 +179,8 @@ namespace engine
 
 			std::map<int, IShaderInput *> GetLightingInputs(MaterialInstance * materialInstance);
 
+			std::map<int, IShaderInput *>  GetEnvMapInputs();
+
 			const std::set<MaterialInstance *> & GetMaterialInstances(const GeMaterial & material) const;
 
 			MaterialInstance * GetMeshMaterialInstance(const GeMesh & mesh);
@@ -194,20 +189,14 @@ namespace engine
 			GeShader m_gBuffShader;
 			ShaderInfo m_gBuffShaderInfo;
 
+			GeShader m_envMapShader;
+			ShaderInfo m_envMapShaderInfo;
+
 			std::set<MaterialStorage> m_materialStorages;
 			std::multimap<GeMaterial, MaterialInstance *> m_materialInstances;
 
 			std::map<GeMesh, MaterialInstance *> m_meshMaterialRelationship;
 			MaterialInstance * m_defaultMaterialInstance = nullptr;
 		};
-
-		//class MaterialHelper final
-		//{
-		//public:
-		//	GAPI_EXPORT
-		//	
-		//};
 	}
-
-	
 }

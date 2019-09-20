@@ -13,6 +13,7 @@ namespace engine
 		class MaterialObject;
 		class Camera;
 		class Texture2d;
+		class TextureCubeMap;
 		class Shader;
 
 		class ResourceManager final
@@ -39,6 +40,10 @@ namespace engine
 
 			Texture2d * GetTexture2d(const GeTexture2d & geTexture2d);
 
+			GeTextureCubeMap CreateTextureCubeMap();
+
+			TextureCubeMap * GetTextureCubeMap(const GeTextureCubeMap & geTexture2d);
+
 			GeShader CreateShader();
 
 			Shader * GetShader(const GeShader & geShader);
@@ -56,6 +61,8 @@ namespace engine
 			std::map<GeCamera, Camera * > m_cameras;
 
 			std::map<GeTexture2d, Texture2d * > m_textures2d;
+
+			std::map<GeTextureCubeMap, TextureCubeMap* > m_texturesCubeMap;
 
 			std::map<GeShader, Shader * > m_shaders;
 

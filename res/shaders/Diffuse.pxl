@@ -3,6 +3,7 @@ layout(binding = 0) uniform sampler2D albedo;
 layout(binding = 1) uniform sampler2D pos;
 layout(binding = 2) uniform sampler2D norm;
 layout(binding = 3) uniform sampler2D uv;
+layout(binding = 4) uniform usampler2D materialId;
 
 // material input
 layout(binding = 11) uniform sampler2D difColor;
@@ -48,7 +49,7 @@ void main() {
 
 	//color = texture(albedo, texture(uv, v_iuv).xy) *0.9 +  texture(uv, v_iuv) * 0.1;
 
-	color = texture(albedo, v_iuv);
+	//color = texture(albedo, v_iuv);
 
 	//color = texture(pos, v_iuv);
 
@@ -65,7 +66,10 @@ void main() {
 	//color = texture(difColor, v_iuv) * dot(normalize(texture(norm, v_iuv)).xyz,normalize(-L));
 	//color = vec4(normalize(-L) * 0.5 + 0.5, 1);
 	//color = texture(difColor, v_iuv) * dot(normalize(texture(norm, v_iuv).xyz), normalize(L));
-	//color = vec4(1., 0., 0., 1.);
+	
+	
+	
+	color = vec4(0.2, 0.2, 0.2, 1.);
 
 
 
@@ -73,7 +77,12 @@ void main() {
 
 
 
-	color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+	uvec4 matId  = texture(materialId, v_iuv);
 
-	//color = worldPosition;
+	if(matId.r == 0)
+	{
+		color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
+	}
+	//color = vec4(texture(materialId, v_iuv).r,0,0,1);
+	//color = texture(albedo, v_iuv);
 }

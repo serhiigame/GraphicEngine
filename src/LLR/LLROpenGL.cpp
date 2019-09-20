@@ -10,6 +10,8 @@
 
 #include <GLEW/glew.h>
 
+#include "LLREnum.h"
+
 #include <assert.h>
 #include <fstream>
 
@@ -147,14 +149,14 @@ namespace engine
 			return ConstantGL::CreateConstantGl(size);
 		}
 
-		ITexture2D * LlrOpenGL::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		ITexture2D * LlrOpenGL::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType)
 		{
-			return Texture2dGL::CreateTexture(width, heigth, format, dataType);
+			return Texture2dGL::CreateTexture(width, heigth, usageFormat, internalFormat, dataType);
 		}
 
-		ITextureCubeMap * LlrOpenGL::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		ITextureCubeMap * LlrOpenGL::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType)
 		{
-			return TextureCubeMapGL::CreateTexture(width, heigth, format, dataType);
+			return TextureCubeMapGL::CreateTexture(width, heigth, usageFormat, internalFormat, dataType);
 		}
 
 		IFramebuffer * LlrOpenGL::CreateFramebuffer(const size_t width, const size_t heigth)

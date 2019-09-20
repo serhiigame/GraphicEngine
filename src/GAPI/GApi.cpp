@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "../LLR/Llr.h"
+#include "../LLR/LLREnum.h"
 #include "../GU/ImageIO.h"
 #include "../GU/SceneIO.h"
 
@@ -48,6 +49,98 @@ namespace engine
 			constexpr int Uv = 3;
 		}
 
+
+		class TextureAdapter final
+		{
+		public:
+			TextureAdapter(Llr * llr, size_t w, size_t h, ETextureColorPack colorPack, ETextureDataType dataType) : m_w(w), m_h(h)
+			{
+				m_llr = llr;
+
+				if (ETextureColorPack::RED == colorPack)
+				{
+					switch (dataType)
+					{
+					case ETextureDataType::FLOAT:
+						m_dataType = EDataType::FLOAT;
+						m_textureSizedFormat = ETextureSizedFormat::RED_FLOAT;
+						m_textureFormat = ETextureFormat::RED;
+
+						break;
+					case ETextureDataType::UNSIGNED_INT:
+						m_dataType = EDataType::UNSIGNED_INT;
+						m_textureSizedFormat = ETextureSizedFormat::RED_UNSIGNED_INT_32;
+						m_textureFormat = ETextureFormat::RED_INTEGER;
+
+						break;
+					default:
+						break;
+					}
+				
+				}
+				else if (ETextureColorPack::RGB == colorPack)
+				{
+					switch (dataType)
+					{
+					case ETextureDataType::FLOAT:
+						m_dataType = EDataType::FLOAT;
+						m_textureSizedFormat = ETextureSizedFormat::RGB_FLOAT;
+						m_textureFormat = ETextureFormat::RGB;
+
+						break;
+					case ETextureDataType::UNSIGNED_INT:
+						m_dataType = EDataType::UNSIGNED_INT;
+						m_textureSizedFormat = ETextureSizedFormat::RGB_UNSIGNED_INT_32;
+						m_textureFormat = ETextureFormat::RGB_INTEGER;
+
+						break;
+					default:
+						break;
+					}
+				}
+				else if (ETextureColorPack::RGBA == colorPack)
+				{
+					switch (dataType)
+					{
+					case ETextureDataType::FLOAT:
+						m_dataType = EDataType::FLOAT;
+						m_textureSizedFormat = ETextureSizedFormat::RGBA_FLOAT;
+						m_textureFormat = ETextureFormat::RGBA;
+
+						break;
+					case ETextureDataType::UNSIGNED_INT:
+						m_dataType = EDataType::UNSIGNED_INT;
+						m_textureSizedFormat = ETextureSizedFormat::RGBA_UNSIGNED_INT_32;
+						m_textureFormat = ETextureFormat::RGBA_INTEGER;
+
+						break;
+					default:
+						break;
+					}
+				}
+			}
+
+
+			ITexture2D * CreateTexture2d()
+			{
+				return m_llr->CreateTexture2d(m_w, m_h, m_textureFormat, m_textureSizedFormat, m_dataType);
+			}
+
+			ITextureCubeMap * CreateTextureCubemap()
+			{
+				return m_llr->CreateTextureCubeMap(m_w, m_h, m_textureFormat, m_textureSizedFormat, m_dataType);
+			}
+
+		private:
+			size_t m_w = 0;
+			size_t m_h = 0;
+			ETextureFormat m_textureFormat = ETextureFormat::NONE;
+			ETextureSizedFormat m_textureSizedFormat = ETextureSizedFormat::NONE;
+			EDataType m_dataType = EDataType::NONE;
+
+			Llr * m_llr;
+		};
+
 		struct RanderStageShaderInputs
 		{
 			Texture2dBindings Texture2dInputs;
@@ -86,22 +179,6 @@ namespace engine
 
 			void Deinit()
 			{
-				//for (IResource * resource : m_resources)
-				//{
-				//	delete resource;
-				//}
-
-				//if (m_gBufferShader)
-				//{
-				//	delete m_gBufferShader;
-				//	m_gBufferShader = nullptr;
-				//}
-				
-				//if (m_gBufferRenderPass)
-				//{
-				//	delete m_gBufferRenderPass;
-				//	m_gBufferRenderPass = nullptr;
-				//}
 
 				if (m_gBufferFb)
 				{
@@ -255,7 +332,9 @@ namespace engine
 
 				for (auto output : shaderInfo.Outputs)
 				{
-					ITexture2D * texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+					TextureAdapter textureAdapter(m_llr, w, h, output.TextureFormat, output.DataType);
+
+					ITexture2D * texture = textureAdapter.CreateTexture2d();
 					shaderOutputs.Texture2dInputs.emplace(output.Binding, texture);
 				}
 
@@ -264,6 +343,30 @@ namespace engine
 				m_gBuffRenderStage = CreateGbufferRenderStege(geShader, shaderInputs, shaderOutputs, m_gBufferFb);
 
 				m_materialManager.RegisterGbuffer(geShader, shaderInfo);
+
+				return true;
+			}
+
+			bool CreateEnvMap(ShaderInfo & shaderInfo)
+			{
+				//TODO: GenMaterialId
+				int materialId = m_materialIdCounter++;
+
+				GeShader geShader = CreateShader(shaderInfo.vertShaderPath, shaderInfo.fragShaderPath);
+				if (!geShader.IsValid())
+				{
+					return false;
+				}
+
+				Shader * shader = m_resourceManager.GetShader(geShader);
+				
+				shader->m_inputs = shaderInfo.Inputs;
+				shader->m_outputs = shaderInfo.Outputs;
+
+				RanderStageShaderInputs globalShaderInputs;
+				globalShaderInputs.Texture2dInputs = m_gBuffRenderStage.ShaderOutputs.Texture2dInputs;
+
+				m_EnvMappingStage = CreateLightRenderStege(geShader, globalShaderInputs, m_acumuFb);
 
 				return true;
 			}
@@ -315,7 +418,7 @@ namespace engine
 					if (inpudDesc->Type == EShaderInputType::TEXTURE_2D)
 					{
 						ShaderInputTexture2d * shaderTexture2dInput = new ShaderInputTexture2d;
-						ShaderInputTexture2dInfo * shaderTexture2dInputInfo = (ShaderInputTexture2dInfo *)inpudDesc;
+						ShaderInputTexture2dInfoPtr shaderTexture2dInputInfo = std::static_pointer_cast<ShaderInputTexture2dInfo>(inpudDesc);
 						shaderTexture2dInput->SetTexture(shaderTexture2dInputInfo->FallbackTexture);
 
 						//m_materialManager.
@@ -422,11 +525,14 @@ namespace engine
 				camera->m_cameraTransforms->Write(sizeof(Mat4f), sizeof(Mat4f), &projection[0]);
 			}
 
-			GeTexture2d CreateTexture2d(size_t w, size_t h)
+			GeTexture2d CreateTexture2d(size_t w, size_t h, ETextureColorPack colorPack, ETextureDataType dataType)
 			{
 				GeTexture2d geTexture2d = m_resourceManager.CreateTexture2d();
 				Texture2d * texture2d = m_resourceManager.GetTexture2d(geTexture2d);
-				texture2d->m_texture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+
+
+				TextureAdapter textureAdapter(m_llr, w, h, colorPack, dataType);
+				texture2d->m_texture = textureAdapter.CreateTexture2d();
 				return geTexture2d;
 			}
 
@@ -453,23 +559,34 @@ namespace engine
 
 			void DeleteShader(Shader * shader)
 			{
+				// TODO:
 				//m_resources.erase(shader);
 				//delete shader;
 			}
 
-			TextureCubeMap * CreateTextureCubeMap(size_t size)
+			GeTextureCubeMap CreateTextureCubeMap(size_t size, ETextureColorPack colorPack, ETextureDataType dataType)
 			{
-				TextureCubeMap * textureCubeMap = new TextureCubeMap;
-				m_resources.insert(textureCubeMap);
-				textureCubeMap->m_texture = m_llr->CreateTextureCubeMap(size, size, ETextureFormat::RGBAf, EDataType::FLOAT);
+				GeTextureCubeMap geTextureCubeMap = m_resourceManager.CreateTextureCubeMap();
+				TextureCubeMap * textureCubeMap = m_resourceManager.GetTextureCubeMap(geTextureCubeMap);
+
+				TextureAdapter textureAdapter(m_llr, w, h, colorPack, dataType);
+
+				textureCubeMap->m_texture = textureAdapter.CreateTextureCubemap();;
 				textureCubeMap->m_size = size;
-				return textureCubeMap;
+				return geTextureCubeMap;
 			}
 
-			void DeleteTextureCubeMap(TextureCubeMap * textureCubeMap)
+			void TextureCubeMapWriteFace(GeTextureCubeMap geTextureCubeMap, ETextureCubeMapFace face, const float * data)
 			{
-				m_resources.erase(textureCubeMap);
-				delete textureCubeMap;
+				TextureCubeMap * texture = m_resourceManager.GetTextureCubeMap(geTextureCubeMap);
+				texture->WriteFace(face, data);
+			}
+
+			void DeleteTextureCubeMap(GeTextureCubeMap textureCubeMap)
+			{
+				// TODO:
+				//m_resources.erase(textureCubeMap);
+				//delete textureCubeMap;
 			}
 
 			PointLight * CreatePointLight()
@@ -548,56 +665,9 @@ namespace engine
 					IFramebuffer * framebuffer = m_gBuffRenderStage.OutputFramebuffer;
 					renderPass->Execute(shader->m_shader, framebuffer);
 				}
-
-
-
-				//GetMeshMaterial
-
-				/*for (auto materialInstances : m_materialGbufferObject.GetMaterialInstances())
-				{					
-					for (auto mm : scene->GetMeshMaterialRelationship())
-					{
-						MaterialInstance * materialInstance = mm.first;
-						const GeMesh geMesh = mm.second;
-
-						const std::set<GeMesh> & sceneMeshes = scene->GetMeshes();
-
-						if (sceneMeshes.find(geMesh) == sceneMeshes.end())
-						{
-							continue;
-						}
-
-						Mesh * mesh = m_resourceManager.GetMesh(geMesh);
-
-
-						BindMesh(mesh);
-
-						/*for (auto materialInput : materialInstances->m_materialGbufferInputs)
-						{
-							int binding = materialInput.first;
-							IShaderInput * shaderInput = materialInput.second;
-
-							if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
-							{
-								GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
-
-								Texture2d * texture = nullptr;
-								if (geTexture.IsValid())
-								{
-									texture = m_resourceManager.GetTexture2d(geTexture);
-									shader->AttachTexture2d(texture->m_texture, binding);
-								}
-								else
-								{
-									//TODO: warning 
-								}
-							}
-						}
-					}
-				}*/
 			}
 
-			void RenderLights(const std::vector< PointLight *> & lights, TextureCubeMap * skybox = nullptr)
+			void RenderLights(Scene * scene)
 			{
 				for (auto lightRenderStage : m_lightRenderStages)
 				{
@@ -605,12 +675,13 @@ namespace engine
 					IShader * shader = m_resourceManager.GetShader(lightRenderStage.Shader)->m_shader;
 					IFramebuffer * acumulator = lightRenderStage.OutputFramebuffer;
 
-					if (skybox)
+					GeTextureCubeMap skybox = scene->GetSkybox();
+					if (skybox.IsValid())
 					{
-						shader->AttachTextureCubeMap(skybox->m_texture, 10);
+						shader->AttachTextureCubeMap(m_resourceManager.GetTextureCubeMap(skybox)->m_texture, 10);
 					}
 
-					for (PointLight * pointLight : lights)
+					for (PointLight * pointLight : scene->GetPointLight())
 					{
 						// TODO: set global constant
 						shader->AttachConstant(pointLight->m_pointLight, 1);
@@ -641,34 +712,37 @@ namespace engine
 								renderPass->Execute(shader, acumulator);
 							}
 						}
-						//for (auto lightingInput : m_materialManager.GetGbufferInputs(materialInstance))
-						//{
-
-						//for (auto materialObjectIt : m_materialLightingObjects) {
-						//	for (auto materialInstances : materialObjectIt.GetMaterialInstances())
-							//{
-								/*for (auto materialInput : materialInstances->m_materialLightingInputs)
-								{
-									int binding = materialInput.first;
-									IShaderInput * shaderInput = materialInput.second;
-
-									if (shaderInput->GetShaderInputType() == EShaderInputType::CONSTANT)
-									{
-										shader->AttachConstant(((ShaderInputConstant *)shaderInput)->m_constant, binding);
-									}
-									else if (shaderInput->GetShaderInputType() == EShaderInputType::TEXTURE_2D)
-									{
-										GeTexture2d geTexture = ((ShaderInputTexture2d *)shaderInput)->GetTexture();
-										Texture2d * texture = m_resourceManager.GetTexture2d(geTexture);
-										shader->AttachTexture2d(texture->m_texture, binding);
-									}
-								}*/
-
-								//renderPass->Execute(shader, acumulator);
-							//}
-						//}
 					}
 				}
+			}
+
+			void RenderEnvironment(Scene * scene)
+			{
+				Shader * shader = m_resourceManager.GetShader(m_EnvMappingStage.Shader);
+				GeCamera geCamera = scene->GetCamera();
+				const Camera * camera = m_resourceManager.GetCamera(geCamera);
+
+				shader->m_shader->AttachConstant(camera->m_cameraTransforms, globalConstAttchment::Camera);
+				
+
+				for (auto shaderInput : shader->m_inputs)
+				{
+					if (shaderInput->Name == "skybox" && shaderInput->Type == EShaderInputType::TEXTURE_CUBEMAP)
+					{
+						GeTextureCubeMap cubemap = scene->GetSkybox();
+						
+						ShaderInputTextureCubeMapInfoPtr shaderInputCubemap = std::static_pointer_cast<ShaderInputTextureCubeMapInfo>(shaderInput);
+
+						
+						TextureCubeMap * texture = m_resourceManager.GetTextureCubeMap((scene->GetSkybox().IsValid()) ? scene->GetSkybox() : shaderInputCubemap->FallbackTexture);
+						shader->m_shader->AttachTextureCubeMap(texture->m_texture, shaderInput->Binding);
+					}
+				
+				}
+
+				IRenderPass * renderPass = m_EnvMappingStage.RenderPass;
+				IFramebuffer * framebuffer = m_EnvMappingStage.OutputFramebuffer;
+				renderPass->Execute(shader->m_shader, framebuffer);
 			}
 
 			void RenderPEffects()
@@ -697,7 +771,9 @@ namespace engine
 			void InitLightRenderState() {
 				m_acumuFb = m_llr->CreateFramebuffer(w, h);
 
-				m_acumTexture = m_llr->CreateTexture2d(w, h, ETextureFormat::RGBAf, EDataType::FLOAT);
+				TextureAdapter textureAdapter(m_llr, w, h, ETextureColorPack::RGBA, ETextureDataType::FLOAT);
+
+				m_acumTexture = textureAdapter.CreateTexture2d();
 
 				//TODO: use ShaderOutput for m_acumTexture
 				m_acumuFb->AttachTextures2d(Texture2dBindings({ { 0, m_acumTexture } }));
@@ -737,15 +813,6 @@ namespace engine
 				renderStage.Shader = geShader;
 				renderStage.OutputFramebuffer = output;
 				renderStage.RenderPass = m_llr->CreateRenderPass();
-
-
-				//for (auto texture2dInput : shaderInputs.Texture2dInputs)
-				//{
-				//	const uint32_t textureLocation = texture2dInput.first;
-				//	const ITexture2D * texture = texture2dInput.second;
-
-				//	renderStage.Shader->AttachTexture2d(texture, textureLocation);
-				//}
 
 				if(!shaderOutputs.Texture2dInputs.empty())
 				{
@@ -837,31 +904,6 @@ namespace engine
 				shaderInput->m_constant = constant;
 
 				return shaderInput;
-			}
-
-			IShaderInput * CreateShaderInputTexture2d()
-			{
-				// TODO create via factory
-				ShaderInputTexture2d * shaderInput = new ShaderInputTexture2d;
-				return shaderInput;
-			}
-
-			IShaderInput * CreateShaderInput(const EMaterialInputType type)
-			{
-				
-				switch (type)
-				{
-				case EMaterialInputType::VEC4F:
-					return CreateShaderInputConstant<Vec4f>();
-
-				case EMaterialInputType::TEXTURE:
-					return CreateShaderInputTexture2d();
-
-				default:
-					break;
-				}
-
-				return nullptr;
 			}
 
 
@@ -957,6 +999,7 @@ namespace engine
 			ITexture2D * m_acumTexture = nullptr;
 
 			RenderStage m_gBuffRenderStage;
+			RenderStage m_EnvMappingStage;
 			std::vector<RenderStage> m_lightRenderStages;
 			std::vector<RenderStage> m_pEffectRenderStages;
 
@@ -1013,6 +1056,10 @@ namespace engine
 			return m_impl->CreateGbuffer(shaderDesc);
 		}
 
+		bool GApi::CreateEnvMap(ShaderInfo & shaderDesc) {
+			return m_impl->CreateEnvMap(shaderDesc);
+		}
+
 		GeMaterial GApi::CreateMaterial(ShaderInfo & shaderDesc)
 		{
 			return m_impl->CreateMaterial(shaderDesc);
@@ -1048,9 +1095,9 @@ namespace engine
 			m_impl->DeleteCamera(camera);
 		}
 
-		GeTexture2d GApi::CreateTexture2d(const size_t width, const size_t heigth)
+		GeTexture2d GApi::CreateTexture2d(const size_t width, const size_t heigth, ETextureColorPack colorPack, ETextureDataType dataType)
 		{
-			return m_impl->CreateTexture2d(width, heigth);
+			return   m_impl->CreateTexture2d(width, heigth, colorPack, dataType);
 		}
 
 		void GApi::DeleteTexture2d(GeTexture2d texture2d)
@@ -1063,12 +1110,17 @@ namespace engine
 			m_impl->Texture2dWriteImage(texture2d, xOffset, yOffset, w, h, data);
 		}
 
-		TextureCubeMap * GApi::CreateTextureCubeMap(size_t size)
+		GeTextureCubeMap GApi::CreateTextureCubeMap(size_t size)
 		{
-			return m_impl->CreateTextureCubeMap(size);
+			return m_impl->CreateTextureCubeMap(size, ETextureColorPack::RGBA, ETextureDataType::FLOAT);
 		}
 
-		void GApi::DeleteTextureCubeMap(TextureCubeMap * textureCubeMap)
+		void GApi::TextureCubeMapWriteFace(GeTextureCubeMap cubemap, int face, const float * data)
+		{
+			m_impl->TextureCubeMapWriteFace(cubemap, (ETextureCubeMapFace)face, data);
+		}
+
+		void GApi::DeleteTextureCubeMap(GeTextureCubeMap textureCubeMap)
 		{
 			m_impl->DeleteTextureCubeMap(textureCubeMap);
 		}
@@ -1118,7 +1170,7 @@ namespace engine
 			scene->SetCamera(camera);
 		}
 
-		void GApi::SetSceneSkybox(Scene * scene, TextureCubeMap * skybox)
+		void GApi::SetSceneSkybox(Scene * scene, GeTextureCubeMap skybox)
 		{
 			scene->SetSkybox(skybox);
 		}
@@ -1144,7 +1196,9 @@ namespace engine
 
 			m_impl->RenderGeometry(scene);
 
-			m_impl->RenderLights(scene->GetPointLight(), scene->GetSkybox());
+			m_impl->RenderLights(scene);
+
+			m_impl->RenderEnvironment(scene);
 
 			m_impl->RenderPEffects();
 

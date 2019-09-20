@@ -26,7 +26,7 @@ public:
 
 	engine::graphic::GeTexture2d LoadTexture2d(const std::string & path);
 
-	engine::graphic::TextureCubeMap * LoadCubeMap(const std::string & path);
+	engine::graphic::GeTextureCubeMap LoadCubeMap(const std::string & path);
 
 private:
 

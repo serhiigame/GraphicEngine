@@ -466,12 +466,12 @@ namespace engine
 			return nullptr;
 		}
 
-		ITexture2D * LlrVulkan::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		ITexture2D * LlrVulkan::CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType)
 		{
 			return nullptr;
 		}
 
-		ITextureCubeMap * LlrVulkan::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType)
+		ITextureCubeMap * LlrVulkan::CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType)
 		{
 			return nullptr;
 		}

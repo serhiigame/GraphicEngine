@@ -17,6 +17,7 @@ namespace engine
 
 		protected:
 			ETextureFormat m_format = ETextureFormat::NONE;
+			ETextureSizedFormat m_sizedFormat;
 			EDataType m_dataType = EDataType::NONE;
 		};
 	}

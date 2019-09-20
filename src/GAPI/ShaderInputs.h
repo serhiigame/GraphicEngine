@@ -59,6 +59,21 @@ namespace engine
 			GeTexture2d m_texture;
 		};
 
+		class ShaderInputTextureCubeMap : public IShaderInput
+		{
+			friend class GApi;
+			friend class GApiImpl;
+			friend class Shader;
+		public:
+			ShaderInputTextureCubeMap() : IShaderInput(EShaderInputType::TEXTURE_CUBEMAP) {}
+
+			GeTextureCubeMap GetTexture() const;
+			void SetTexture(const GeTextureCubeMap & texture);
+
+		private:
+			GeTextureCubeMap m_texture;
+		};
+
 		struct ShaderInputInfoBase
 		{
 			ShaderInputInfoBase(EShaderInputType type) : Type(type) {}
@@ -71,6 +86,12 @@ namespace engine
 		{
 			ShaderInputTexture2dInfo() : ShaderInputInfoBase(EShaderInputType::TEXTURE_2D) {}
 			GeTexture2d FallbackTexture;
+		};
+
+		struct ShaderInputTextureCubeMapInfo final : ShaderInputInfoBase
+		{
+			ShaderInputTextureCubeMapInfo() : ShaderInputInfoBase(EShaderInputType::TEXTURE_CUBEMAP) {}
+			GeTextureCubeMap FallbackTexture;
 		};
 
 
@@ -92,6 +113,13 @@ namespace engine
 			std::string Name;
 			int Binding;
 			GeTexture2d OutputTexture;
+			ETextureDataType DataType;
+			ETextureColorPack TextureFormat;
 		};
+
+
+		typedef std::shared_ptr<ShaderInputInfoBase> ShaderInputInfoBasePtr;
+		typedef std::shared_ptr<ShaderInputTexture2dInfo> ShaderInputTexture2dInfoPtr;
+		typedef std::shared_ptr<ShaderInputTextureCubeMapInfo> ShaderInputTextureCubeMapInfoPtr;
 	}
 }

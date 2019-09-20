@@ -26,5 +26,18 @@ namespace engine
 				m_texture = texture;
 			}
 		}
+
+		GeTextureCubeMap ShaderInputTextureCubeMap::GetTexture() const
+		{
+			return m_texture;
+		}
+
+		void ShaderInputTextureCubeMap::SetTexture(const GeTextureCubeMap & texture)
+		{
+			if (texture.IsValid())
+			{
+				m_texture = texture;
+			}
+		}
 	}
 }

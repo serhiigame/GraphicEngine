@@ -7,13 +7,36 @@ namespace engine
 	
 	namespace graphic
 	{
+		// TODO: use in externall class
 		inline GLenum AdapterGlFormat(ETextureFormat format)
 		{
+			if (ETextureFormat::RED == format) return GL_RED;
 			if (ETextureFormat::RGB == format) return GL_RGB;
 			if (ETextureFormat::RGBA == format) return GL_RGBA;
-			if (ETextureFormat::RGBf == format) return GL_RGB32F;
-			if (ETextureFormat::RGBAf == format) return GL_RGBA32F;
+			return -1;
+		}
 
+
+		inline GLenum AdapterGlSizedFormat(ETextureSizedFormat format)
+		{
+			switch (format)
+			{
+			case ETextureSizedFormat::RED_UNSIGNED_INT_32:
+				return GL_R32UI;
+			case ETextureSizedFormat::RED_FLOAT:
+				return GL_R32F;
+			case ETextureSizedFormat::RGB_UNSIGNED_INT_32:
+				return GL_RGB32UI;
+			case ETextureSizedFormat::RGB_FLOAT:
+				return GL_RGB32F;
+			case ETextureSizedFormat::RGBA_UNSIGNED_INT_32:
+				return GL_RGBA32UI;
+			case ETextureSizedFormat::RGBA_FLOAT:
+				return GL_RGBA32F;
+			case ETextureSizedFormat::NONE:
+			default:
+				break;
+			}
 			return -1;
 		}
 
@@ -47,23 +70,10 @@ namespace engine
 		}
 
 
-		ITextureCubeMap * TextureCubeMapGL::CreateTexture(const size_t width, const size_t height, const ETextureFormat internalFormat, const EDataType dataType)
+		ITextureCubeMap * TextureCubeMapGL::CreateTexture(const size_t width, const size_t height, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType)
 		{
 			TextureCubeMapGL * texture = new TextureCubeMapGL;
 
-
-			if (internalFormat == ETextureFormat::RGBAf)
-			{
-				texture->m_format = ETextureFormat::RGBA;
-			}
-			else if (internalFormat == ETextureFormat::RGBf)
-			{
-				texture->m_format = ETextureFormat::RGB;
-			}
-			else
-			{
-				texture->m_format = internalFormat;
-			}
 			
 			texture->m_dataType = dataType;
 
@@ -73,7 +83,7 @@ namespace engine
 
 			for (GLuint i = 0; i < 6; i++)
 			{
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, AdapterGlFormat(internalFormat), (GLsizei)width, (GLsizei)height, 0, AdapterGlFormat(texture->m_format), LlrOpenGL::AdapterGlDataType(texture->m_dataType), nullptr);
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, AdapterGlFormat(usageFormat), (GLsizei)width, (GLsizei)height, 0, AdapterGlSizedFormat(internalFormat), LlrOpenGL::AdapterGlDataType(texture->m_dataType), nullptr);
 			}
 
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

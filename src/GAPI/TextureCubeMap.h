@@ -19,7 +19,7 @@ namespace engine
 			~TextureCubeMap();
 
 			GAPI_EXPORT
-			void WriteFace(ETextureCubeMapFace, float * data);
+			void WriteFace(ETextureCubeMapFace, const float * data);
 
 		protected:
 			ITextureCubeMap * m_texture = nullptr;

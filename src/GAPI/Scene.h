@@ -38,9 +38,9 @@ namespace engine
 
 			void AddPointLight(PointLight * mesh);
 
-			void SetSkybox(TextureCubeMap * cubemap);
+			void SetSkybox(GeTextureCubeMap cubemap);
 
-			TextureCubeMap * GetSkybox() const { return m_skybox; }
+			GeTextureCubeMap GetSkybox() const { return m_skybox; }
 
 			const std::vector< PointLight *> & GetPointLight() { return m_pointLights; }
 
@@ -51,7 +51,7 @@ namespace engine
 			//std::multimap< MaterialInstance *, GeMesh> m_materialInstanceMeshRelationship;
 
 			std::vector< PointLight *> m_pointLights;
-			TextureCubeMap * m_skybox = nullptr;
+			GeTextureCubeMap m_skybox;
 			GeCamera m_camera;
 		};
 	}

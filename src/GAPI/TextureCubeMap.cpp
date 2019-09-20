@@ -15,7 +15,7 @@ namespace engine
 
 			m_texture = nullptr;
 		}
-		void TextureCubeMap::WriteFace(ETextureCubeMapFace face, float * data)
+		void TextureCubeMap::WriteFace(ETextureCubeMapFace face, const float * data)
 		{
 			if (m_texture)
 			{

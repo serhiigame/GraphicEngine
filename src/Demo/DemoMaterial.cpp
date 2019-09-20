@@ -20,7 +20,7 @@ void DemoMaterial::SetScene()  {
 	engine::graphic::RawMeshData rawMeshSphere = DemoUtils::CreateSphere(0.2);
 	engine::graphic::RawMeshData rawMeshPlane = DemoUtils::CreatePlane(5.0, 5.0);
 
-	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("../res/images/skybox.png");
+	engine::graphic::GeTextureCubeMap skybox = demoUtils.LoadCubeMap("../res/images/skybox.png");
 
 	engine::graphic::MaterialInstance * material1 = gApi.CreateMaterialInstance(m_diffuseMaterial);
 	engine::graphic::GeTexture2d ballTexture = demoUtils.LoadTexture2d("../res/images/basketball.png");

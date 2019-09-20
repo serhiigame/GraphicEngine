@@ -15,7 +15,7 @@ namespace engine
 			m_pointLights.push_back(pointLight);
 		}
 
-		void Scene::SetSkybox(TextureCubeMap * cubemap)
+		void Scene::SetSkybox(GeTextureCubeMap cubemap)
 		{
 			m_skybox = cubemap;
 		}

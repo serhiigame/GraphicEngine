@@ -177,13 +177,13 @@ engine::graphic::GeTexture2d DemoUtils::LoadTexture2d(const std::string & path)
 		return engine::graphic::GeTexture2d();
 	}
 	
-	engine::graphic::GeTexture2d texture2d = m_gapi->CreateTexture2d(w, h);
+	engine::graphic::GeTexture2d texture2d = m_gapi->CreateTexture2d(w, h, engine::graphic::ETextureColorPack::RGBA, engine::graphic::ETextureDataType::FLOAT);
 	m_gapi->Texture2dWriteImage(texture2d, 0, 0, w, h, pData);
 	
 	return texture2d;
 }
 
-engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & path)
+engine::graphic::GeTextureCubeMap DemoUtils::LoadCubeMap(const std::string & path)
 {
 	int w, h;
 	const int k_defaultBpp = 4;
@@ -191,7 +191,7 @@ engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & pat
 
 	if (!pData)
 	{
-		return nullptr;
+		return engine::graphic::GeTextureCubeMap();
 	}
 
 	const int wSectors = 4;
@@ -202,7 +202,7 @@ engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & pat
 
 	if (imgSize != h / hSectors)
 	{
-		return nullptr;
+		return engine::graphic::GeTextureCubeMap();
 	}
 
 	int faceIdxs[6][2] = {
@@ -225,7 +225,7 @@ engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & pat
 	};
 
 
-	engine::graphic::TextureCubeMap * cubeMap = m_gapi->CreateTextureCubeMap(imgSize);
+	engine::graphic::GeTextureCubeMap  geGubeMap = m_gapi->CreateTextureCubeMap(imgSize);
 	std::vector<float> faceData(imgSize * imgSize  * k_defaultBpp);
 
 	size_t offset = 0;
@@ -251,12 +251,12 @@ engine::graphic::TextureCubeMap * DemoUtils::LoadCubeMap(const std::string & pat
 			flipFaceImage4f(true, false, imgSize, faceData.data());
 		}
 		
-		cubeMap->WriteFace(faceOrder[k], faceData.data());
+		m_gapi->TextureCubeMapWriteFace(geGubeMap, (int)faceOrder[k], faceData.data());
 
 		offset = 0;
 	}
 
 	delete pData;
 
-	return cubeMap;
+	return geGubeMap;
 }

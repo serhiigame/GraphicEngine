@@ -23,10 +23,23 @@ namespace engine
 			, CAMERA
 			, MATERIAL
 			, MATERIAL_INSTANCE
+			, ENV_MAP
 			, TEXTURE_2D
+			, TEXTURE_CUBEMAP
 			, SHADER
 		};
 
+
+		enum class ETextureColorPack {
+			RED
+			,RGB
+			,RGBA
+		};
+
+		enum class ETextureDataType {
+			FLOAT
+			, UNSIGNED_INT
+		};
 
 		class GeObjectHandler
 		{
@@ -74,6 +87,11 @@ namespace engine
 			GeMaterial() : GeObjectHandler(EGeObjectType::MATERIAL) {}
 		};
 
+		class GeEnvMap : public GeObjectHandler {
+		public:
+			GeEnvMap() : GeObjectHandler(EGeObjectType::ENV_MAP) {}
+		};
+
 		class GeCamera : public GeObjectHandler {
 		public:
 			GeCamera() : GeObjectHandler(EGeObjectType::CAMERA) {}
@@ -82,6 +100,11 @@ namespace engine
 		class GeTexture2d : public GeObjectHandler {
 		public:
 			GeTexture2d() : GeObjectHandler(EGeObjectType::TEXTURE_2D) {}
+		};
+
+		class GeTextureCubeMap : public GeObjectHandler {
+		public:
+			GeTextureCubeMap() : GeObjectHandler(EGeObjectType::TEXTURE_CUBEMAP) {}
 		};
 
 		class GeShader : public GeObjectHandler

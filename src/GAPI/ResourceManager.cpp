@@ -5,6 +5,7 @@
 #include "Material.h"
 
 #include "Texture2d.h"
+#include "TextureCubeMap.h"
 
 #include "Shader.h"
 
@@ -63,6 +64,14 @@ namespace engine
 		Texture2d * ResourceManager::GetTexture2d(const GeTexture2d & geTexture2d)
 		{
 			return m_textures2d.at(geTexture2d);
+		}
+		GeTextureCubeMap ResourceManager::CreateTextureCubeMap()
+		{
+			return createGeObject(m_texturesCubeMap, GenerateId());
+		}
+		TextureCubeMap * ResourceManager::GetTextureCubeMap(const GeTextureCubeMap & geTexture2d)
+		{
+			return m_texturesCubeMap.at(geTexture2d);
 		}
 		GeShader ResourceManager::CreateShader()
 		{

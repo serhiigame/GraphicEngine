@@ -21,6 +21,7 @@ namespace engine
 		class MaterialInstance;
 		
 		class TextureCubeMap;
+		enum class ETextureCubeMapFace;
 
 		class Shader;
 		class IShaderInput;
@@ -53,7 +54,7 @@ namespace engine
 			void DeleteCamera(GeCamera camera);
 
 			GAPI_EXPORT
-			GeTexture2d CreateTexture2d(const size_t width, const size_t heigth);
+			GeTexture2d CreateTexture2d(const size_t width, const size_t heigth, ETextureColorPack colorPack, ETextureDataType dataType);
 
 			GAPI_EXPORT
 			void DeleteTexture2d(GeTexture2d texture2d);
@@ -62,10 +63,13 @@ namespace engine
 			void Texture2dWriteImage(GeTexture2d texture2d, int xOffset, int yOffset, int w, int h, const void * data);
 
 			GAPI_EXPORT
-			TextureCubeMap * CreateTextureCubeMap(const size_t size);
+			GeTextureCubeMap CreateTextureCubeMap(const size_t size);
 
 			GAPI_EXPORT
-			void DeleteTextureCubeMap(TextureCubeMap * texture2d);
+			void TextureCubeMapWriteFace(GeTextureCubeMap cubemap, int face, const float * data);
+
+			GAPI_EXPORT
+			void DeleteTextureCubeMap(GeTextureCubeMap textureCubeMap);
 
 			GAPI_EXPORT
 			PointLight * CreatePointLight();
@@ -81,6 +85,9 @@ namespace engine
 
 			GAPI_EXPORT
 			bool CreateGbuffer(ShaderInfo & shaderDesc);
+
+			GAPI_EXPORT
+			bool CreateEnvMap(ShaderInfo & shaderDesc);
 
 			GAPI_EXPORT
 			GeMaterial CreateMaterial(ShaderInfo & shaderDesc);
@@ -119,7 +126,7 @@ namespace engine
 			void SetSceneCamera(Scene * scene, GeCamera camera);
 
 			GAPI_EXPORT
-			void SetSceneSkybox(Scene * scene, TextureCubeMap * skybox);
+			void SetSceneSkybox(Scene * scene, GeTextureCubeMap skybox);
 
 			GAPI_EXPORT
 			void AddSceneMesh(Scene * scene, GeMesh mesh);

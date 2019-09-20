@@ -31,7 +31,7 @@ namespace engine
 			return nullptr;
 		}*/
 
-		void MaterialInstance::AddMaterialInput(IShaderInput * shaderInput, ShaderInputInfoBase * shaderInputInfo)
+		void MaterialInstance::AddMaterialInput(IShaderInput * shaderInput, ShaderInputInfoBasePtr shaderInputInfo)
 		{
 			MaterialInput materialInput;
 			materialInput.ShaderInput = shaderInput;
@@ -44,7 +44,7 @@ namespace engine
 			return m_materilInputs;
 		}
 
-		ShaderInputInfoBase * MaterialManager::MakeShaderTextureInputDesc(const std::string & Name, const int Binding, const GeTexture2d & fallback)
+		ShaderInputInfoBasePtr MaterialManager::MakeShaderTexture2dInputDesc(const std::string & Name, const int Binding, const GeTexture2d & fallback)
 		{
 			ShaderInputTexture2dInfo * texInputInfo = new ShaderInputTexture2dInfo;
 			texInputInfo->Binding = Binding;
@@ -52,13 +52,31 @@ namespace engine
 			texInputInfo->Name = Name;
 			texInputInfo->FallbackTexture = fallback;
 
-			return texInputInfo;
+			return ShaderInputInfoBasePtr(texInputInfo);
+		}
+
+		GAPI_EXPORT
+		ShaderInputInfoBasePtr MaterialManager::MakeShaderTextureCubeMapInputDesc(const std::string & Name, const int Binding, const GeTextureCubeMap & fallback)
+		{
+			ShaderInputTextureCubeMapInfo * texInputInfo = new ShaderInputTextureCubeMapInfo;
+			texInputInfo->Binding = Binding;
+			texInputInfo->Type = EShaderInputType::TEXTURE_CUBEMAP;
+			texInputInfo->Name = Name;
+			texInputInfo->FallbackTexture = fallback;
+
+			return ShaderInputInfoBasePtr(texInputInfo);
 		}
 
 		void MaterialManager::RegisterGbuffer(const GeShader & shader, const ShaderInfo & shaderInfo)
 		{
 			m_gBuffShader = shader;
 			m_gBuffShaderInfo = shaderInfo;
+		}
+
+		void MaterialManager::RegisterEnvMap(const GeShader & shader, const ShaderInfo & shaderInfo)
+		{
+			m_envMapShader = shader;
+			m_envMapShaderInfo = shaderInfo;
 		}
 
 		void MaterialManager::RegistreMaterial(const GeMaterial & geMaterial)
@@ -160,6 +178,26 @@ namespace engine
 			}
 
 			return lightingShaderInputs;
+		}
+
+		std::map<int, IShaderInput*> MaterialManager::GetEnvMapInputs()
+		{
+			std::map<int, IShaderInput*> envMapShaderInputs;
+
+			for (auto inputInfo : m_envMapShaderInfo.Inputs)
+			{
+				if (inputInfo->Type == EShaderInputType::TEXTURE_CUBEMAP)
+				{
+					ShaderInputTextureCubeMapInfoPtr texCubeMapInputInfo = std::static_pointer_cast<ShaderInputTextureCubeMapInfo>(inputInfo);
+
+					ShaderInputTextureCubeMap * inputCubemap = new ShaderInputTextureCubeMap();
+					inputCubemap->SetTexture(texCubeMapInputInfo->FallbackTexture);
+
+					envMapShaderInputs.emplace(inputInfo->Binding, inputCubemap);
+				}				
+			}
+
+			return envMapShaderInputs;
 		}
 
 		const std::set<MaterialInstance*> & MaterialManager::GetMaterialInstances(const GeMaterial & geMaterial) const

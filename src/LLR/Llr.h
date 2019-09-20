@@ -47,10 +47,10 @@ namespace engine
 			virtual IConstant * CreateConatant(const size_t size) = 0;
 
 			__declspec(dllexport)
-			virtual ITexture2D * CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType) = 0;
+			virtual ITexture2D * CreateTexture2d(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType) = 0;
 
 			__declspec(dllexport)
-				virtual ITextureCubeMap * CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat format, const EDataType dataType) = 0;
+				virtual ITextureCubeMap * CreateTextureCubeMap(const size_t width, const size_t heigth, const ETextureFormat usageFormat, const ETextureSizedFormat internalFormat, const EDataType dataType) = 0;
 
 			__declspec(dllexport)
 			virtual IFramebuffer * CreateFramebuffer(const size_t width, const size_t heigth) = 0;

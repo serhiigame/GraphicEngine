@@ -69,7 +69,8 @@ namespace engine
 
 			glDrawBuffers(drawBuffers.size(), drawBuffers.data());
 
-			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			GLenum fbState = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			if (fbState != GL_FRAMEBUFFER_COMPLETE)
 				__debugbreak();
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);

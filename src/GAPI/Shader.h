@@ -16,7 +16,7 @@ namespace engine
 			std::string vertShaderPath;
 			std::string fragShaderPath;
 
-			std::vector<ShaderInputInfoBase *> Inputs;
+			std::vector<ShaderInputInfoBasePtr> Inputs;
 			std::vector<ShaderOutputInfo> Outputs;
 		};
 
@@ -33,6 +33,10 @@ namespace engine
 
 		protected:
 			IShader * m_shader = nullptr;
+
+			std::vector<ShaderInputInfoBasePtr> m_inputs;
+			std::vector<ShaderOutputInfo> m_outputs;
+
 			int m_priority = -1;
 		};
 	}

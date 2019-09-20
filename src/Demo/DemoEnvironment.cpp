@@ -12,7 +12,7 @@ void DemoEnvironment::SetScene()  {
 
 	DemoUtils demoUtils(&gApi);
 
-	engine::graphic::TextureCubeMap * skybox = demoUtils.LoadCubeMap("D:/Projects/GraphicEngine/res/Images/skybox.png");
+	engine::graphic::GeTextureCubeMap skybox = demoUtils.LoadCubeMap("D:/Projects/GraphicEngine/res/Images/skybox.png");
 
 	mesh = gApi.CreateMesh(rawMeshData);
 
@@ -22,7 +22,7 @@ void DemoEnvironment::SetScene()  {
 
 	gApi.SetPointLightIntensity(light, 1.);
 
-	gApi.SetSceneSkybox(m_scene, skybox);
+	//gApi.SetSceneSkybox(m_scene, skybox);
 
 	gApi.AddSceneMesh(m_scene, mesh);
 
