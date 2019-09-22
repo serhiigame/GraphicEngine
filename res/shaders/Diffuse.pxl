@@ -79,7 +79,7 @@ void main() {
 
 	uvec4 matId  = texture(materialId, v_iuv);
 
-	if(matId.r == 0)
+	if(matId.r == 1)
 	{
 		color = texture(albedo, v_iuv) * clamp(dot( normalize(-texture(norm, v_iuv).xyz), normalize(-L)), 0.01,1.);
 	}

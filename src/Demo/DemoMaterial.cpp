@@ -48,7 +48,7 @@ void DemoMaterial::SetScene()  {
 
 	gApi.SetPointLightIntensity(light, 1.);
 
-	gApi.SetSceneSkybox(m_scene, skybox);
+	//gApi.SetSceneSkybox(m_scene, skybox);
 
 	gApi.AddSceneMesh(m_scene, mesh1);
 	gApi.AddSceneMesh(m_scene, mesh2);

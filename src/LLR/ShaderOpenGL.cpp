@@ -6,6 +6,8 @@
 #include "Texture2dGL.h"
 #include "TextureCubeMapGL.h"
 
+#include "Util.h"
+
 #include <GLEW/glew.h>
 
 #include <assert.h>
@@ -91,7 +93,7 @@ namespace engine
 			glUseProgram(m_programId);
 			
 			EBufferType bufferType = buffer->GetBufferType();
-			GLenum type = LlrOpenGL::AdapterGlDataType(dataType);
+			GLenum type = Util::DataType2GLenum(dataType);
 			if (bufferType == EBufferType::VERTEX)
 			{
 				const IBufferGL * buffGl = (const IBufferGL *)buffer;

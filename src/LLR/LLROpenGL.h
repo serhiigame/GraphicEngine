@@ -8,9 +8,7 @@ namespace engine
 		
 		class LlrOpenGL : public Llr
 		{
-		public:
-			static GLenum AdapterGlDataType(const EDataType dataType);
-			
+		public:			
 			virtual IShader * CreateShader(const std::string & vertexPass
 				, const std::string & fragmentPass
 				, const std::string & tesselationPass = std::string()

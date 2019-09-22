@@ -569,7 +569,7 @@ namespace engine
 				GeTextureCubeMap geTextureCubeMap = m_resourceManager.CreateTextureCubeMap();
 				TextureCubeMap * textureCubeMap = m_resourceManager.GetTextureCubeMap(geTextureCubeMap);
 
-				TextureAdapter textureAdapter(m_llr, w, h, colorPack, dataType);
+				TextureAdapter textureAdapter(m_llr, size, size, colorPack, dataType);
 
 				textureCubeMap->m_texture = textureAdapter.CreateTextureCubemap();;
 				textureCubeMap->m_size = size;

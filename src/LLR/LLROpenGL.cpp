@@ -20,16 +20,6 @@ namespace engine
 {
 	namespace graphic
 	{
-		GLenum LlrOpenGL::AdapterGlDataType(const EDataType dataType)
-		{
-			switch (dataType)
-			{
-			case EDataType::FLOAT:			return GL_FLOAT;
-			case EDataType::UNSIGNED_INT:	return GL_UNSIGNED_INT;
-			default:						return NULL;
-			}
-		};
-
 		IShader * LlrOpenGL::CreateShader(const std::string & vertexPass, const std::string & fragmentPass, const std::string & tesselationPass, const std::vector<std::string> define)
 		{
 			GLint statusV, statusF;
